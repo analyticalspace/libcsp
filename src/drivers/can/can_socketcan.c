@@ -36,13 +36,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include <csp/csp.h>
-#include <csp/arch/csp_thread.h>
-#include <csp/drivers/can_socketcan.h>
+#include <csp/csp_autoconfig.h>
 
 #if (CSP_HAVE_LIBSOCKETCAN)
 #include <libsocketcan.h>
 #endif
+
+#include <csp/csp.h>
+#include <csp/arch/csp_thread.h>
+#include <csp/drivers/can_socketcan.h>
 
 // CAN interface data, state, etc.
 typedef struct {

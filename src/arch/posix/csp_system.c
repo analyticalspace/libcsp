@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <csp/arch/posix/csp_system.h>
 #include <csp/csp_debug.h>
+#include <csp/csp_autoconfig.h>
 
 #ifdef CSP_HAVE_LIBPROCPS
 #include <proc/readproc.h>

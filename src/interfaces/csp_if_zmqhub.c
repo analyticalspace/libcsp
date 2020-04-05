@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/interfaces/csp_if_zmqhub.h>
+#include <csp/csp_autoconfig.h> // -> CSP_X defines (compile configuration)
 
 #if (CSP_HAVE_LIBZMQ)
 
@@ -27,13 +27,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <assert.h>
 
 #include <zmq.h>
-#include <assert.h>
 
 #include <csp/csp.h>
 #include <csp/csp_debug.h>
 #include <csp/arch/csp_thread.h>
 #include <csp/arch/csp_malloc.h>
 #include <csp/arch/csp_semaphore.h>
+#include <csp/interfaces/csp_if_zmqhub.h>
 
 #define CSP_ZMQ_MTU   1024	 // max payload data, see documentation
 
@@ -57,30 +57,30 @@ int csp_zmqhub_tx(const csp_route_t * route, csp_packet_t * packet) {
 
 	zmq_driver_t * drv = route->iface->driver_data;
 
+	int result;
 	const uint8_t dest = (route->via != CSP_NO_VIA_ADDRESS) ? route->via : packet->id.dst;
-
 	uint16_t length = packet->length;
 	uint8_t * destptr = ((uint8_t *) &packet->id) - sizeof(dest);
 
 	memcpy(destptr, &dest, sizeof(dest));
-	
+
 	csp_bin_sem_wait(&drv->tx_wait, 1000); /* Using ZMQ in thread safe manner*/
-	
-	int result = zmq_send(drv->publisher, destptr, length + sizeof(packet->id) + sizeof(dest), 0);
-	
+	{
+		result = zmq_send(drv->publisher, destptr,
+						  length + sizeof(packet->id) + sizeof(dest), 0);
+	}
 	csp_bin_sem_post(&drv->tx_wait); /* Release tx semaphore */
-	
+
 	if (result < 0) {
 		csp_log_error("ZMQ send error: %u %s\r\n", result, zmq_strerror(zmq_errno()));
 	}
 
    csp_buffer_free(packet);
 
-	return CSP_ERR_NONE;
-
+   return CSP_ERR_NONE;
 }
 
-CSP_DEFINE_TASK(csp_zmqhub_task) {
+CSP_DEFINE_TASK(csp_zmqhub_rx) {
 
 	zmq_driver_t * drv = param;
 	csp_packet_t * packet;
@@ -100,7 +100,8 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		unsigned int datalen = zmq_msg_size(&msg);
 
 		if (datalen < HEADER_SIZE) {
-			csp_log_warn("RX %s: Too short datalen: %u - expected min %u bytes", drv->iface.name, datalen, HEADER_SIZE);
+			csp_log_warn("ZMQ RX %s: Too short datalen: %u - expected min %u bytes",
+						 drv->iface.name, datalen, HEADER_SIZE);
 			zmq_msg_close(&msg);
 			continue;
 		}
@@ -135,7 +136,7 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 }
 
 int csp_zmqhub_make_endpoint(const char * host, uint16_t port, char * buf, size_t buf_size) {
-	
+
 	int res = snprintf(buf, buf_size, "tcp://%s:%u", host, port);
 
 	if ((res < 0) || (res >= (int)buf_size)) {
@@ -162,7 +163,7 @@ int csp_zmqhub_init(uint8_t addr,
 
 int csp_zmqhub_init_w_endpoints(uint8_t addr,
 								const char * publisher_endpoint,
-				const char * subscriber_endpoint,
+								const char * subscriber_endpoint,
 								uint32_t flags,
 								csp_iface_t ** return_interface) {
 
@@ -174,7 +175,7 @@ int csp_zmqhub_init_w_endpoints(uint8_t addr,
 		rxfilter_count = 1;
 	}
 
-	return 
+	return
 		csp_zmqhub_init_w_name_endpoints_rxfilter(NULL, rxfilter, rxfilter_count, publisher_endpoint,
 												  subscriber_endpoint, flags, return_interface);
 }
@@ -231,7 +232,7 @@ int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * ifname,
 	assert(csp_bin_sem_create(&drv->tx_wait) == CSP_SEMAPHORE_OK);
 
 	/* Start RX thread */
-	assert(csp_thread_create(csp_zmqhub_task, drv->iface.name, 20000, drv, 0, &drv->rx_thread) == 0);
+	assert(csp_thread_create(csp_zmqhub_rx, drv->iface.name, 0, drv, 0, &drv->rx_thread) == 0);
 
 	/* Register interface */
 	csp_iflist_add(&drv->iface);
