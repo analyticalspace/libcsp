@@ -18,8 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _SRC_CSP_PROMISC_H_
-#define _SRC_CSP_PROMISC_H_
+#ifndef _CSP_PROMISC_H_
+#define _CSP_PROMISC_H_
 
 #include <csp/csp_promisc.h>
 
@@ -36,4 +36,5 @@ void csp_promisc_add(csp_packet_t * packet);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_PROMISC_H_

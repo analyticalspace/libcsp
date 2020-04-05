@@ -17,8 +17,9 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef CSP_IF_ZMQHUB_H_
-#define CSP_IF_ZMQHUB_H_
+
+#ifndef _CSP_INTERFACES_IF_ZMQHUB_H_
+#define _CSP_INTERFACES_IF_ZMQHUB_H_
 
 /**
    @file
@@ -31,6 +32,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    For further details on ZMQ, see http://www.zeromq.org.
 */
 
+#include <stdint.h>
+#include <sys/types.h>
 #include <csp/csp_interface.h>
 
 #ifdef __cplusplus
@@ -41,18 +44,18 @@ extern "C" {
    zmqproxy default subscribe (rx) port.
    The client must connect it's publish endpoint to the zmqproxy's subscribe port.
 */
-#define CSP_ZMQPROXY_SUBSCRIBE_PORT   6000
+#define CSP_ZMQPROXY_SUBSCRIBE_PORT		6000
 
 /**
    zmqproxy default publish (tx) port.
    The client must connect it's subscribe endpoint to the zmqproxy's publish port.
 */
-#define CSP_ZMQPROXY_PUBLISH_PORT     7000
+#define CSP_ZMQPROXY_PUBLISH_PORT		7000
 
 /**
    Default ZMQ interface name.
 */
-#define CSP_ZMQHUB_IF_NAME            "ZMQHUB"
+#define CSP_ZMQHUB_IF_NAME				"ZMQHUB"
 
 /**
    Format endpoint connection string for ZMQ.
@@ -75,9 +78,9 @@ int csp_zmqhub_make_endpoint(const char * host, uint16_t port, char * buf, size_
    @return #CSP_ERR_NONE on succcess - else assert.
 */
 int csp_zmqhub_init(uint8_t addr,
-                    const char * host,
-                    uint32_t flags,
-                    csp_iface_t ** return_interface);
+					const char * host,
+					uint32_t flags,
+					csp_iface_t ** return_interface);
 
 /**
    Setup ZMQ interface.
@@ -89,10 +92,10 @@ int csp_zmqhub_init(uint8_t addr,
    @return #CSP_ERR_NONE on succcess - else assert.
 */
 int csp_zmqhub_init_w_endpoints(uint8_t addr,
-                                const char * publish_endpoint,
-                                const char * subscribe_endpoint,
-                                uint32_t flags,
-                                csp_iface_t ** return_interface);
+								const char * publish_endpoint,
+								const char * subscribe_endpoint,
+								uint32_t flags,
+								csp_iface_t ** return_interface);
 
 /**
    Setup ZMQ interface.
@@ -106,13 +109,14 @@ int csp_zmqhub_init_w_endpoints(uint8_t addr,
    @return #CSP_ERR_NONE on succcess - else assert.
 */
 int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * ifname,
-                                              const uint8_t rx_filter[], unsigned int rx_filter_count,
-                                              const char * publish_endpoint,
-                                              const char * subscribe_endpoint,
-                                              uint32_t flags,
-                                              csp_iface_t ** return_interface);
+											  const uint8_t rx_filter[], unsigned int rx_filter_count,
+											  const char * publish_endpoint,
+											  const char * subscribe_endpoint,
+											  uint32_t flags,
+											  csp_iface_t ** return_interface);
 
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_INTERFACES_IF_ZMQHUB_H_

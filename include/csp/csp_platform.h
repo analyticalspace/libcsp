@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Platform support.
 */
 
+#include <limits.h>
+
 #include <csp/csp_types.h>
 
 #ifdef __cplusplus
@@ -67,4 +69,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_PLATFORM_H_

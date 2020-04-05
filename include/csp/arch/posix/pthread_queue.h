@@ -18,8 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _PTHREAD_QUEUE_H_
-#define _PTHREAD_QUEUE_H_
+#ifndef _CSP_ARCH_POSIX_PTHREAD_QUEUE_H_
+#define _CSP_ARCH_POSIX_PTHREAD_QUEUE_H_
 
 /**
    @file
@@ -29,8 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Inspired by c-pthread-queue by Matthew Dickinson: http://code.google.com/p/c-pthread-queue/
 */
 
+#include <stdint.h>
 #include <pthread.h>
-
 #include <csp/arch/csp_queue.h>
 
 #ifdef __cplusplus
@@ -63,24 +63,24 @@ extern "C" {
    Queue handle.
 */
 typedef struct pthread_queue_s {
-    //! Memory area.
-    void * buffer;
-    //! Memory size.
-    int size;
-    //! Item/element size.
-    int item_size;
-    //! Items/elements in queue.
-    int items;
-    //! Insert point.
-    int in;
-    //! Extract point.
-    int out;
-    //! Lock.
-    pthread_mutex_t mutex;
-    //! Wait because queue is full (insert).
-    pthread_cond_t cond_full;
-    //! Wait because queue is empty (extract).
-    pthread_cond_t cond_empty;
+	//! Memory area.
+	void * buffer;
+	//! Memory size.
+	int size;
+	//! Item/element size.
+	int item_size;
+	//! Items/elements in queue.
+	int items;
+	//! Insert point.
+	int in;
+	//! Extract point.
+	int out;
+	//! Lock.
+	pthread_mutex_t mutex;
+	//! Wait because queue is full (insert).
+	pthread_cond_t cond_full;
+	//! Wait because queue is empty (extract).
+	pthread_cond_t cond_empty;
 } pthread_queue_t;
 
 /**
@@ -111,4 +111,5 @@ int pthread_queue_items(pthread_queue_t * queue);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_ARCH_POSIX_PTHREAD_QUEUE_H_

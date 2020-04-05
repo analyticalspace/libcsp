@@ -18,6 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <stdint.h>
+
 #include "csp_rtable_internal.h"
 
 #include <csp/csp_debug.h>
@@ -25,10 +27,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /* Definition of routing table */
 typedef struct csp_rtable_s {
-    csp_route_t route;
-    uint8_t address;
-    uint8_t netmask;
-    struct csp_rtable_s * next;
+	csp_route_t route;
+	uint8_t address;
+	uint8_t netmask;
+	struct csp_rtable_s * next;
 } csp_rtable_t;
 
 /* Routing table (linked list) */
@@ -42,8 +44,8 @@ static csp_rtable_t * csp_rtable_find(uint8_t addr, uint8_t netmask, uint8_t exa
 
 	/* Start search */
 	csp_rtable_t * i = rtable;
-	while(i) {
 
+	while(i) {
 		/* Look for exact match */
 		if (i->address == addr && i->netmask == netmask) {
 			best_result = i;
@@ -73,13 +75,12 @@ static csp_rtable_t * csp_rtable_find(uint8_t addr, uint8_t netmask, uint8_t exa
 		}
 
 		i = i->next;
-
 	}
 
 	if (0 && best_result) {
 		csp_log_packet("Using routing entry: %u/%u if %s mtu %u",
-				best_result->address, best_result->netmask, best_result->route.iface->name, best_result->route.via);
-        }
+					   best_result->address, best_result->netmask, best_result->route.iface->name, best_result->route.via);
+	}
 
 	return best_result;
 
@@ -87,11 +88,13 @@ static csp_rtable_t * csp_rtable_find(uint8_t addr, uint8_t netmask, uint8_t exa
 
 const csp_route_t * csp_rtable_find_route(uint8_t dest_address)
 {
-    csp_rtable_t * entry = csp_rtable_find(dest_address, CSP_ID_HOST_SIZE, 0);
-    if (entry) {
-	return &entry->route;
-    }
-    return NULL;
+	csp_rtable_t * entry = csp_rtable_find(dest_address, CSP_ID_HOST_SIZE, 0);
+	
+	if (entry) {
+		return &entry->route;
+	}
+
+	return NULL;
 }
 
 int csp_rtable_set_internal(uint8_t address, uint8_t netmask, csp_iface_t *ifc, uint8_t via) {
@@ -131,17 +134,22 @@ int csp_rtable_set_internal(uint8_t address, uint8_t netmask, csp_iface_t *ifc, 
 }
 
 void csp_rtable_free(void) {
-	for (csp_rtable_t * i = rtable; (i);) {
+
+	for (csp_rtable_t * i = rtable; (i); ) {
 		void * freeme = i;
 		i = i->next;
 		csp_free(freeme);
 	}
+
 	rtable = NULL;
 }
 
 void csp_rtable_iterate(csp_rtable_iterator_t iter, void * ctx)
 {
-    for (csp_rtable_t * route = rtable;
-         route && iter(ctx, route->address, route->netmask, &route->route);
-         route = route->next);
+	for (csp_rtable_t * route = rtable;
+		 route && iter(ctx, route->address, route->netmask, &route->route);
+		 route = route->next)
+	{
+		; // no op
+	}
 }

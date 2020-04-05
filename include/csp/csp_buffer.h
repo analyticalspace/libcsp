@@ -91,4 +91,5 @@ size_t csp_buffer_data_size(void);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_BUFFER_H_

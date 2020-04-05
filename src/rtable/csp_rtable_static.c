@@ -18,6 +18,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <stdint.h>
+#include <string.h>
+
 #include "csp_rtable_internal.h"
 
 #include <csp/csp_debug.h>
@@ -30,43 +33,47 @@ const csp_route_t * csp_rtable_find_route(uint8_t dest_address) {
 	if (rtable[dest_address].iface != NULL) {
 		return &rtable[dest_address];
 	}
+
 	if (rtable[CSP_DEFAULT_ROUTE].iface != NULL) {
 		return &rtable[CSP_DEFAULT_ROUTE];
 	}
-	return NULL;
 
+	return NULL;
 }
 
 int csp_rtable_set_internal(uint8_t address, uint8_t netmask, csp_iface_t *ifc, uint8_t via) {
 
 	/* Validates options */
 	if ((netmask != 0) && (netmask != CSP_ID_HOST_SIZE)) {
-		csp_log_error("%s: invalid netmask in route: address %u, netmask %u, interface %p, via %u", __FUNCTION__, address, netmask, ifc, via);
+		csp_log_error("%s: invalid netmask in route: address %u, netmask %u, interface %p, via %u",
+					  __FUNCTION__, address, netmask, ifc, via);
 		return CSP_ERR_INVAL;
 	}
 
 	/* Set route */
-        const unsigned int ri = (netmask == 0) ? CSP_DEFAULT_ROUTE : address;
-        rtable[ri].iface = ifc;
-        rtable[ri].via = via;
+	const unsigned int ri = (netmask == 0) ? CSP_DEFAULT_ROUTE : address;
+	rtable[ri].iface = ifc;
+	rtable[ri].via = via;
 
 	return CSP_ERR_NONE;
 }
 
 void csp_rtable_free(void) {
-
 	memset(rtable, 0, sizeof(rtable));
 }
 
 void csp_rtable_iterate(csp_rtable_iterator_t iter, void * ctx) {
 
-	for (unsigned int i = 0; i < CSP_DEFAULT_ROUTE; ++i) {
+	unsigned int i;
+
+	for (i = 0; i < CSP_DEFAULT_ROUTE; ++i) {
 		if (rtable[i].iface != NULL) {
 			if (iter(ctx, i, CSP_ID_HOST_SIZE, &rtable[i]) == false) {
 				return; // stopped by user
 			}
 		}
 	}
+
 	if (rtable[CSP_DEFAULT_ROUTE].iface) {
 		iter(ctx, 0, 0, &rtable[CSP_DEFAULT_ROUTE]);
 	}

@@ -18,16 +18,19 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/csp_sfp.h>
-
-#include <csp/csp_buffer.h>
-#include <csp/csp_debug.h>
-#include <csp/csp_endian.h>
-#include <csp/arch/csp_malloc.h>
+#include <stdint.h>
+#include <string.h>
 
 #include "csp_conn.h"
 
-typedef struct __attribute__((__packed__)) {
+#include <csp/csp_sfp.h>
+#include <csp/csp_buffer.h>
+#include <csp/csp_debug.h>
+#include <csp/csp_endian.h>
+#include <csp/csp_compiler.h>
+#include <csp/arch/csp_malloc.h>
+
+typedef struct CSP_COMPILER_PACKED {
 	uint32_t offset;
 	uint32_t totalsize;
 } sfp_header_t;
@@ -49,11 +52,14 @@ static inline sfp_header_t * csp_sfp_header_remove(csp_packet_t * packet) {
 	if ((packet->id.flags & CSP_FFRAG) == 0) {
 		return NULL;
 	}
+
 	sfp_header_t * header;
+	
 	if (packet->length < sizeof(*header)) {
 		return NULL;
 	}
-        header = (sfp_header_t *) &packet->data[packet->length - sizeof(*header)];
+	
+	header = (sfp_header_t *) &packet->data[packet->length - sizeof(*header)];
 	packet->length -= sizeof(*header);
 
 	header->offset = csp_ntoh32(header->offset);
@@ -66,24 +72,28 @@ static inline sfp_header_t * csp_sfp_header_remove(csp_packet_t * packet) {
 	return header;
 }
 
-int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, unsigned int totalsize, unsigned int mtu, uint32_t timeout, csp_memcpy_fnc_t memcpyfcn) {
+int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, unsigned int totalsize,
+							unsigned int mtu, uint32_t timeout, csp_memcpy_fnc_t memcpyfcn) {
+
+	unsigned int count = 0;
+	
 	if (mtu == 0) {
 		return CSP_ERR_INVAL;
 	}
 
-	unsigned int count = 0;
 	while(count < totalsize) {
-
 		sfp_header_t * sfp_header;
 
 		/* Allocate packet */
 		csp_packet_t * packet = csp_buffer_get(mtu + sizeof(*sfp_header));
+
 		if (packet == NULL) {
 			return CSP_ERR_NOMEM;
 		}
 
 		/* Calculate sending size */
 		unsigned int size = totalsize - count;
+		
 		if (size > mtu) {
 			size = mtu;
 		}
@@ -117,18 +127,19 @@ int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, unsigned int t
 	}
 
 	return CSP_ERR_NONE;
-
 }
 
 int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasize, uint32_t timeout, csp_packet_t * first_packet) {
 
 	*return_data = NULL; /* Allow caller to assume csp_free() can always be called when dataout is non-NULL */
-        *return_datasize = 0;
+	*return_datasize = 0;
 
 	/* Get first packet from user, or from connection */
 	csp_packet_t * packet;
+
 	if (first_packet == NULL) {
 		packet = csp_read(conn, timeout);
+	
 		if (packet == NULL) {
 			return CSP_ERR_TIMEDOUT;
 		}
@@ -136,17 +147,19 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 		packet = first_packet;
 	}
 
-        uint8_t * data = NULL;
+	uint8_t * data = NULL;
 	uint32_t datasize = 0;
 	uint32_t data_offset = 0;
-        int error = CSP_ERR_TIMEDOUT;
+	int error = CSP_ERR_TIMEDOUT;
+
 	do {
 		/* Read SFP header */
 		sfp_header_t * sfp_header = csp_sfp_header_remove(packet);
+
 		if (sfp_header == NULL) {
 			csp_log_warn("%s: %u:%u, invalid message, id.flags: 0x%x, length: %u",
-					__FUNCTION__, packet->id.src, packet->id.sport,
-					packet->id.flags, packet->length);
+						 __FUNCTION__, packet->id.src, packet->id.sport,
+						 packet->id.flags, packet->length);
 			csp_buffer_free(packet);
 
 			error = CSP_ERR_SFP;
@@ -154,14 +167,14 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 		}
 
 		csp_log_protocol("%s: %u:%u, fragment %"PRIu32"/%"PRIu32,
-					__FUNCTION__, packet->id.src, packet->id.sport,
-					sfp_header->offset + packet->length, sfp_header->totalsize);
+						 __FUNCTION__, packet->id.src, packet->id.sport,
+						 sfp_header->offset + packet->length, sfp_header->totalsize);
 
 		/* Consistency check */
 		if (sfp_header->offset != data_offset) {
 			csp_log_warn("%s: %u:%u, invalid message, offset %"PRIu32" (expected %"PRIu32"), length: %u, totalsize %"PRIu32,
-					__FUNCTION__, packet->id.src, packet->id.sport,
-					sfp_header->offset, data_offset, packet->length, sfp_header->totalsize);
+						 __FUNCTION__, packet->id.src, packet->id.sport,
+						 sfp_header->offset, data_offset, packet->length, sfp_header->totalsize);
 			csp_buffer_free(packet);
 
 			error = CSP_ERR_SFP;
@@ -170,12 +183,13 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 
 		/* Allocate memory */
 		if (data == NULL) {
-                        datasize = sfp_header->totalsize;
+			datasize = sfp_header->totalsize;
 			data = csp_malloc(datasize);
+
 			if (data == NULL) {
 				csp_log_warn("%s: %u:%u, csp_malloc(%"PRIu32") failed",
-					__FUNCTION__, packet->id.src, packet->id.sport,
-					datasize);
+							 __FUNCTION__, packet->id.src, packet->id.sport,
+							 datasize);
 				csp_buffer_free(packet);
 
 				error = CSP_ERR_NOMEM;
@@ -184,7 +198,8 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 		}
 
 		/* Consistency check */
-		if (((data_offset + packet->length) > datasize) || (datasize != sfp_header->totalsize)) {
+		if (((data_offset + packet->length) > datasize) || (datasize != sfp_header->totalsize))
+		{
 			csp_log_warn("%s: %u:%u, invalid size, sfp.offset: %"PRIu32", length: %u, total: %"PRIu32" / %"PRIu32"",
 					__FUNCTION__, packet->id.src, packet->id.sport,
 					sfp_header->offset, packet->length, datasize, sfp_header->totalsize);
@@ -201,9 +216,9 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 		if (data_offset >= datasize) {
 			// transfer complete
 			csp_buffer_free(packet);
+						*return_data = data; // must be freed by csp_free()
+						*return_datasize = datasize;
 
-                        *return_data = data; // must be freed by csp_free()
-                        *return_datasize = datasize;
 			return CSP_ERR_NONE;
 		}
 
@@ -212,6 +227,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 			csp_log_warn("%s: %u:%u, invalid size, sfp.offset: %"PRIu32", length: %u, total: %"PRIu32" / %"PRIu32"",
 					__FUNCTION__, packet->id.src, packet->id.sport,
 					sfp_header->offset, packet->length, datasize, sfp_header->totalsize);
+
 			csp_buffer_free(packet);
 
 			error = CSP_ERR_SFP;
@@ -224,6 +240,5 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 
 error:
 	csp_free(data);
-        return error;
-
+		return error;
 }

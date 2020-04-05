@@ -18,8 +18,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef LIB_CSP_SRC_INTERFACES_CSP_IF_CAN_PBUF_H_
-#define LIB_CSP_SRC_INTERFACES_CSP_IF_CAN_PBUF_H_
+#ifndef _CSP_IF_CAN_PBUF_H_
+#define _CSP_IF_CAN_PBUF_H_
+
+#include <stdint.h>
 
 #include <csp/csp_platform.h>
 
@@ -43,4 +45,4 @@ csp_can_pbuf_element_t *csp_can_pbuf_new(uint32_t id, CSP_BASE_TYPE *task_woken)
 csp_can_pbuf_element_t *csp_can_pbuf_find(uint32_t id, uint32_t mask, CSP_BASE_TYPE *task_woken);
 void csp_can_pbuf_cleanup(CSP_BASE_TYPE *task_woken);
 
-#endif
+#endif // _CSP_IF_CAN_PBUF_H_

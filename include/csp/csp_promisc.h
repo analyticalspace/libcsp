@@ -26,11 +26,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
    Promiscuous packet queue.
 
-   This function is used to enable promiscuous mode for incoming packets, e.g. router, bridge.
+   These functions are used to enable promiscuous mode for incoming packets, e.g. router, bridge.
    If enabled, a copy of all incoming packets are cloned (using csp_buffer_clone()) and placed in a
    FIFO queue, that can be read using csp_promisc_read().
 */
 
+#include <stdint.h>
 #include <csp/csp_types.h>
 
 #ifdef __cplusplus

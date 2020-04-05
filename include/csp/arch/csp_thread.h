@@ -130,4 +130,5 @@ void csp_sleep_ms(unsigned int time_ms);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_THREAD_H_

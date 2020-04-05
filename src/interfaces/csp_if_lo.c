@@ -18,9 +18,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/interfaces/csp_if_lo.h>
-
 #include "../csp_init.h"
+
+#include <csp/interfaces/csp_if_lo.h>
 
 /**
  * Loopback interface transmit function
@@ -43,7 +43,6 @@ static int csp_lo_tx(const csp_route_t * ifroute, csp_packet_t * packet) {
 	csp_qfifo_write(packet, &csp_if_lo, NULL);
 
 	return CSP_ERR_NONE;
-
 }
 
 /* Interface definition */

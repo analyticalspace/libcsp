@@ -18,14 +18,18 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef CSP_INTERFACES_CSP_IF_KISS_H
-#define CSP_INTERFACES_CSP_IF_KISS_H
+#ifndef _CSP_INTERFACES_CSP_IF_KISS_H
+#define _CSP_INTERFACES_CSP_IF_KISS_H
 
 /**
    @file
 
    KISS interface (serial).
 */
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <sys/types.h>
 
 #include <csp/csp_interface.h>
 #include <csp/arch/csp_semaphore.h>
@@ -53,10 +57,10 @@ typedef int (*csp_kiss_driver_tx_f)(void *driver_data, const uint8_t * data, siz
    KISS Rx mode/state.
 */
 typedef enum {
-	KISS_MODE_NOT_STARTED,  //!< No start detected
-	KISS_MODE_STARTED,      //!< Started on a KISS frame
-	KISS_MODE_ESCAPED,      //!< Rx escape character 
-	KISS_MODE_SKIP_FRAME,   //!< Skip remaining frame, wait for end character
+	KISS_MODE_NOT_STARTED,	//!< No start detected
+	KISS_MODE_STARTED,		//!< Started on a KISS frame
+	KISS_MODE_ESCAPED,		//!< Rx escape character
+	KISS_MODE_SKIP_FRAME,	//!< Skip remaining frame, wait for end character
 } kiss_mode_e;
 
 /**
@@ -113,4 +117,5 @@ void csp_kiss_rx(csp_iface_t * iface, const uint8_t * buf, size_t len, void * px
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_INTERFACES_CSP_IF_KISS_H

@@ -18,17 +18,15 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/csp_debug.h>
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
-#ifdef __AVR__
-#include <avr/pgmspace.h>
-#endif
-
 #include <csp/csp.h>
+#include <csp/csp_debug.h>
 #include <csp/arch/csp_clock.h>
 #include <csp/arch/csp_system.h>
 
@@ -39,17 +37,16 @@ csp_debug_hook_func_t csp_debug_hook_func = NULL;
 
 /* Debug levels */
 bool csp_debug_level_enabled[] = {
-	[CSP_ERROR]	= true,
-	[CSP_WARN]	= true,
-	[CSP_INFO]	= false,
+	[CSP_ERROR]		= true,
+	[CSP_WARN]		= true,
+	[CSP_INFO]		= false,
 	[CSP_BUFFER]	= false,
 	[CSP_PACKET]	= false,
 	[CSP_PROTOCOL]	= false,
-	[CSP_LOCK]	= false,
+	[CSP_LOCK]		= false,
 };
 
 void csp_debug_hook_set(csp_debug_hook_func_t f) {
-
 	csp_debug_hook_func = f;
 }
 
@@ -97,16 +94,14 @@ void do_csp_debug(csp_debug_level_t level, const char *format, ...) {
 	} else {
 		csp_sys_set_color(color);
 #if (CSP_DEBUG_TIMESTAMP)
-                csp_timestamp_t ts;
-                csp_clock_get_time(&ts);
-                printf("%u.%06u ", ts.tv_sec, ts.tv_nsec / 1000U);
-#endif
-#ifdef __AVR__
-		vfprintf_P(stdout, format, args);
-#else
-		vprintf(format, args);
-#endif
-		printf("\r\n");
+		csp_timestamp_t ts;
+		csp_clock_get_time(&ts);
+		fprintf(stdout, "%u.%06u ", ts.tv_sec, ts.tv_nsec / 1000U);
+#endif // CSP_DEBUG_TIMESTAMP
+
+		vfprintf(stdout, format, args);
+		fprintf(stdout, "\r\n");
+
 		csp_sys_set_color(COLOR_RESET);
 	}
 
@@ -125,6 +120,7 @@ int csp_debug_get_level(csp_debug_level_t level) {
 	if (level <= CSP_LOCK) {
 		return csp_debug_level_enabled[level];
 	}
+
 	return 0;
 }
 

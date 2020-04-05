@@ -18,10 +18,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "csp_qfifo.h"
 
 #include <csp/arch/csp_queue.h>
 
+#include "csp_qfifo.h"
 #include "csp_init.h"
 
 static csp_queue_handle_t qfifo[CSP_ROUTE_FIFOS];
@@ -49,12 +49,13 @@ int csp_qfifo_init(void) {
 #endif
 
 	return CSP_ERR_NONE;
-
 }
 
 void csp_qfifo_free_resources(void) {
 
-	for (int prio = 0; prio < CSP_ROUTE_FIFOS; prio++) {
+	int prio;
+
+	for (prio = 0; prio < CSP_ROUTE_FIFOS; prio++) {
 		if (qfifo[prio]) {
 			csp_queue_remove(qfifo[prio]);
 			qfifo[prio] = NULL;
@@ -67,7 +68,6 @@ void csp_qfifo_free_resources(void) {
 		qfifo_events = NULL;
 	}
 #endif
-
 }
 
 int csp_qfifo_read(csp_qfifo_t * input) {
@@ -98,7 +98,6 @@ int csp_qfifo_read(csp_qfifo_t * input) {
 #endif
 
 	return CSP_ERR_NONE;
-
 }
 
 void csp_qfifo_write(csp_packet_t * packet, csp_iface_t * iface, CSP_BASE_TYPE * pxTaskWoken) {
@@ -139,7 +138,7 @@ void csp_qfifo_write(csp_packet_t * packet, csp_iface_t * iface, CSP_BASE_TYPE *
 		result = csp_queue_enqueue_isr(qfifo[fifo], &queue_element, pxTaskWoken);
 
 #if (CSP_USE_QOS)
-	static int event = 0;
+	static int event = 0; // ?
 
 	if (result == CSP_QUEUE_OK) {
 		if (pxTaskWoken == NULL)
@@ -153,13 +152,14 @@ void csp_qfifo_write(csp_packet_t * packet, csp_iface_t * iface, CSP_BASE_TYPE *
 		if (pxTaskWoken == NULL) { // Only do logging in non-ISR context
 			csp_log_warn("ERROR: Routing input FIFO is FULL. Dropping packet.");
 		}
+
 		iface->drop++;
+		
 		if (pxTaskWoken == NULL)
 			csp_buffer_free(packet);
 		else
 			csp_buffer_free_isr(packet);
 	}
-
 }
 
 void csp_qfifo_wake_up(void) {

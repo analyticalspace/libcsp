@@ -19,11 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "csp_transport.h"
+#include "../csp_conn.h"
 
 #include <csp/csp.h>
 #include <csp/arch/csp_queue.h>
-
-#include "../csp_conn.h"
 
 void csp_udp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 
@@ -45,6 +44,5 @@ void csp_udp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 		/* Ensure that this connection will not be posted to this socket again */
 		conn->socket = NULL;
 	}
-
 }
 

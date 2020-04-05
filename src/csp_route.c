@@ -18,10 +18,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/csp.h>
-
+#include <stdint.h>
 #include <stdlib.h>
 
+#include <csp/csp.h>
 #include <csp/csp_crc32.h>
 #include <csp/csp_endian.h>
 #include <csp/arch/csp_thread.h>
@@ -151,7 +151,6 @@ static int csp_route_security_check(uint32_t security_opts, csp_iface_t * iface,
 #endif
 
 	return CSP_ERR_NONE;
-
 }
 
 int csp_route_work(uint32_t timeout) {
@@ -172,6 +171,7 @@ int csp_route_work(uint32_t timeout) {
 	}
 
 	packet = input.packet;
+
 	if (packet == NULL) {
 		return CSP_ERR_TIMEDOUT;
 	}
@@ -250,7 +250,6 @@ int csp_route_work(uint32_t timeout) {
 
 	/* If this is an incoming packet on a new connection */
 	if (conn == NULL) {
-
 		/* Reject packet if no matching socket is found */
 		if (!socket) {
 			csp_buffer_free(packet);
@@ -288,7 +287,6 @@ int csp_route_work(uint32_t timeout) {
 
 	/* Packet to existing connection */
 	} else {
-
 		/* Run security check on incoming packet */
 		if (csp_route_security_check(conn->opts, input.iface, packet) < 0) {
 			csp_buffer_free(packet);
@@ -314,24 +312,22 @@ int csp_route_work(uint32_t timeout) {
 }
 
 static CSP_DEFINE_TASK(csp_task_router) {
-
 	/* Here there be routing */
 	while (1) {
 		csp_route_work(FIFO_TIMEOUT);
 	}
 
 	return CSP_TASK_RETURN;
-
 }
 
 int csp_route_start_task(unsigned int task_stack_size, unsigned int task_priority) {
 
-	int ret = csp_thread_create(csp_task_router, "RTE", task_stack_size, NULL, task_priority, NULL);
+	int ret = csp_thread_create(csp_task_router, "ROUTER", task_stack_size, NULL, task_priority, NULL);
+
 	if (ret != 0) {
 		csp_log_error("Failed to start router task, error: %d", ret);
 		return ret;
 	}
 
 	return CSP_ERR_NONE;
-
 }

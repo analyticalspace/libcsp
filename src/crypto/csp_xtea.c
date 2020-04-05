@@ -20,21 +20,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /* Simple implementation of XTEA in CTR mode */
 
-#include <csp/crypto/csp_xtea.h>
-
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include <csp/csp_endian.h>
 #include <csp/csp_buffer.h>
 #include <csp/crypto/csp_sha1.h>
+#include <csp/crypto/csp_xtea.h>
+#include <csp/csp_compiler.h>
 
-#define XTEA_BLOCKSIZE 	8
-#define XTEA_ROUNDS 	32
+#define XTEA_BLOCKSIZE	8
+#define XTEA_ROUNDS		32
 #define XTEA_KEY_LENGTH	16
 
 /* XTEA key */
-static uint32_t csp_xtea_key[XTEA_KEY_LENGTH/sizeof(uint32_t)] __attribute__ ((aligned(sizeof(uint32_t))));
+static uint32_t csp_xtea_key[XTEA_KEY_LENGTH/sizeof(uint32_t)] CSP_COMPILER_ALIGNED(sizeof(uint32_t));
 
 #define STORE32L(x, y) do { (y)[3] = (uint8_t)(((x) >> 24) & 0xff); \
 							(y)[2] = (uint8_t)(((x) >> 16) & 0xff); \
@@ -67,15 +68,14 @@ static inline void csp_xtea_encrypt_block(uint8_t *block, uint8_t const *key) {
 
 	STORE32L(v0, &block[0]);
 	STORE32L(v1, &block[4]);
-
 }
 
 static inline void csp_xtea_xor_byte(uint8_t * dst, uint8_t * src, uint32_t len) {
 
 	unsigned int i;
+
 	for (i = 0; i < len; i++)
 		dst[i] ^= src[i];
-
 }
 
 int csp_xtea_set_key(const void * key, uint32_t keylen) {
@@ -88,7 +88,6 @@ int csp_xtea_set_key(const void * key, uint32_t keylen) {
 	memcpy(csp_xtea_key, hash, XTEA_KEY_LENGTH);
 
 	return CSP_ERR_NONE;
-
 }
 
 int csp_xtea_encrypt(void * plain, const uint32_t len, uint32_t iv[2]) {
@@ -119,7 +118,6 @@ int csp_xtea_encrypt(void * plain, const uint32_t len, uint32_t iv[2]) {
 	}
 
 	return CSP_ERR_NONE;
-
 }
 
 int csp_xtea_encrypt_packet(csp_packet_t * packet) {
@@ -138,20 +136,18 @@ int csp_xtea_encrypt_packet(csp_packet_t * packet) {
 	/* Encrypt data */
 	if (csp_xtea_encrypt(packet->data, packet->length, iv) != CSP_ERR_NONE) {
 		return CSP_ERR_XTEA;
-        }
+	}
 
 	memcpy(&packet->data[packet->length], &nonce_n, sizeof(nonce_n));
 	packet->length += sizeof(nonce_n);
 
 	return CSP_ERR_NONE;
-
 }
 
 int csp_xtea_decrypt(void * cipher, const uint32_t len, uint32_t iv[2]) {
 
 	/* Since we use counter mode, we can reuse the encryption function */
 	return csp_xtea_encrypt(cipher, len, iv);
-
 }
 
 int csp_xtea_decrypt_packet(csp_packet_t * packet) {
@@ -163,7 +159,7 @@ int csp_xtea_decrypt_packet(csp_packet_t * packet) {
 		return CSP_ERR_XTEA;
 	}
 
-        memcpy(&nonce, &packet->data[packet->length - sizeof(nonce)], sizeof(nonce));
+	memcpy(&nonce, &packet->data[packet->length - sizeof(nonce)], sizeof(nonce));
 	nonce = csp_ntoh32(nonce);
 
 	/* Create initialization vector */
@@ -177,5 +173,4 @@ int csp_xtea_decrypt_packet(csp_packet_t * packet) {
 	packet->length -= sizeof(nonce);
 
 	return CSP_ERR_NONE;
-
 }

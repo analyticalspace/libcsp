@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Semaphore and Mutex interface.
 */
 
+#include <stdint.h>
 #include <csp/csp_platform.h>
 
 #ifdef __cplusplus
@@ -44,7 +45,7 @@ extern "C" {
 
    @note Platform specific (this is Posix) and differs from standard CSP error codes.
 */
-#define CSP_SEMAPHORE_OK 	1
+#define CSP_SEMAPHORE_OK	1
 /**
    Semaphore (or mutex) call failed.
 
@@ -73,8 +74,8 @@ typedef pthread_mutex_t csp_mutex_t;
 #include <pthread.h>
 #include "posix/pthread_queue.h"
 
-#define CSP_SEMAPHORE_OK 	PTHREAD_QUEUE_OK
-#define CSP_SEMAPHORE_ERROR 	PTHREAD_QUEUE_EMPTY
+#define CSP_SEMAPHORE_OK		PTHREAD_QUEUE_OK
+#define CSP_SEMAPHORE_ERROR		PTHREAD_QUEUE_EMPTY
 
 typedef pthread_queue_t * csp_bin_sem_handle_t;
 typedef pthread_queue_t * csp_mutex_t;
@@ -85,7 +86,7 @@ typedef pthread_queue_t * csp_mutex_t;
 
 #include <Windows.h>
 
-#define CSP_SEMAPHORE_OK 	1
+#define CSP_SEMAPHORE_OK	1
 #define CSP_SEMAPHORE_ERROR	2
 
 typedef HANDLE csp_bin_sem_handle_t;
@@ -99,7 +100,7 @@ typedef HANDLE csp_mutex_t;
 #include <FreeRTOS.h>
 #include <semphr.h>
 
-#define CSP_SEMAPHORE_OK 	pdPASS
+#define CSP_SEMAPHORE_OK	pdPASS
 #define CSP_SEMAPHORE_ERROR	pdFAIL
 
 typedef xSemaphoreHandle csp_bin_sem_handle_t;
@@ -112,7 +113,7 @@ typedef xSemaphoreHandle csp_mutex_t;
 
    @note Value is different from standard CSP error codes, see #CSP_SEMAPHORE_OK
 */
-#define CSP_MUTEX_OK 		CSP_SEMAPHORE_OK
+#define CSP_MUTEX_OK		CSP_SEMAPHORE_OK
 
 /**
    Mutex call failed.
@@ -203,4 +204,5 @@ int csp_bin_sem_post_isr(csp_bin_sem_handle_t * sem, CSP_BASE_TYPE * pxTaskWoken
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_SEMAPHORE_H_

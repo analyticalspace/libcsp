@@ -18,8 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef CSP_IFLIST_H_
-#define CSP_IFLIST_H_
+#ifndef _CSP_IFLIST_H_
+#define _CSP_IFLIST_H_
 
 /**
    @file
@@ -69,8 +69,9 @@ csp_iface_t * csp_iflist_get(void);
    Convert bytes to readable string.
 */
 int csp_bytesize(char *buffer, int buffer_len, unsigned long int bytes);
-    
+
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_IFLIST_H_

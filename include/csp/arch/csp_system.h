@@ -47,15 +47,15 @@ typedef enum {
 	COLOR_BLACK		= 0x01,
 	COLOR_RED		= 0x02,
 	COLOR_GREEN		= 0x03,
-	COLOR_YELLOW		= 0x04,
+	COLOR_YELLOW	= 0x04,
 	COLOR_BLUE		= 0x05,
-	COLOR_MAGENTA		= 0x06,
+	COLOR_MAGENTA	= 0x06,
 	COLOR_CYAN		= 0x07,
 	COLOR_WHITE		= 0x08,
 	/* Modifiers */
-	COLOR_NORMAL		= 0x0F,
+	COLOR_NORMAL	= 0x0F,
 	COLOR_BOLD		= 0x10,
-	COLOR_UNDERLINE		= 0x20,
+	COLOR_UNDERLINE	= 0x20,
 	COLOR_BLINK		= 0x30,
 	COLOR_HIDE		= 0x40,
 } csp_color_t;
@@ -132,4 +132,5 @@ void csp_sys_set_color(csp_color_t color);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_SYSTEM_H_

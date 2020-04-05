@@ -18,17 +18,17 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/interfaces/csp_if_kiss.h>
-
 #include <string.h>
+
+#include <csp/interfaces/csp_if_kiss.h>
 
 #include <csp/csp_endian.h>
 #include <csp/csp_crc32.h>
 
-#define FEND  		0xC0
-#define FESC  		0xDB
-#define TFEND 		0xDC
-#define TFESC 		0xDD
+#define FEND		0xC0
+#define FESC		0xDB
+#define TFEND		0xDC
+#define TFESC		0xDD
 #define TNC_DATA	0x00
 
 int csp_kiss_tx(const csp_route_t * ifroute, csp_packet_t * packet) {
@@ -41,32 +41,37 @@ int csp_kiss_tx(const csp_route_t * ifroute, csp_packet_t * packet) {
 
 	/* Lock */
 	if (csp_mutex_lock(&ifdata->lock, 1000) != CSP_MUTEX_OK) {
-            return CSP_ERR_TIMEDOUT;
-        }
+		return CSP_ERR_TIMEDOUT;
+	}
 
 	/* Save the outgoing id in the buffer */
 	packet->id.ext = csp_hton32(packet->id.ext);
 	packet->length += sizeof(packet->id.ext);
 
 	/* Transmit data */
-        const unsigned char start[] = {FEND, TNC_DATA};
-        const unsigned char esc_end[] = {FESC, TFEND};
-        const unsigned char esc_esc[] = {FESC, TFESC};
-        const unsigned char * data = (unsigned char *) &packet->id.ext;
-        ifdata->tx_func(driver, start, sizeof(start));
-	for (unsigned int i = 0; i < packet->length; i++, ++data) {
+	const unsigned char start[] = {FEND, TNC_DATA};
+	const unsigned char esc_end[] = {FESC, TFEND};
+	const unsigned char esc_esc[] = {FESC, TFESC};
+	const unsigned char * data = (unsigned char *) &packet->id.ext;
+	ifdata->tx_func(driver, start, sizeof(start));
+
+	for (unsigned int i = 0; i < packet->length; i++, ++data)
+	{
 		if (*data == FEND) {
-                    ifdata->tx_func(driver, esc_end, sizeof(esc_end));
-                    continue;
+			ifdata->tx_func(driver, esc_end, sizeof(esc_end));
+			continue;
 		}
-                if (*data == FESC) {
-                    ifdata->tx_func(driver, esc_esc, sizeof(esc_esc));
-                    continue;
+
+		if (*data == FESC) {
+			ifdata->tx_func(driver, esc_esc, sizeof(esc_esc));
+			continue;
 		}
+
 		ifdata->tx_func(driver, data, 1);
 	}
-        const unsigned char stop[] = {FEND};
-        ifdata->tx_func(driver, stop, sizeof(stop));
+
+	const unsigned char stop[] = {FEND};
+	ifdata->tx_func(driver, stop, sizeof(stop));
 
 	/* Free data */
 	csp_buffer_free(packet);
@@ -97,8 +102,8 @@ void csp_kiss_rx(csp_iface_t * iface, const uint8_t * buf, size_t len, void * px
 			ifdata->rx_length = 0;
 		}
 
-		switch (ifdata->rx_mode) {
-
+		switch (ifdata->rx_mode)
+		{
 		case KISS_MODE_NOT_STARTED:
 
 			/* Skip any characters until End char detected */
@@ -206,11 +211,8 @@ void csp_kiss_rx(csp_iface_t * iface, const uint8_t * buf, size_t len, void * px
 				ifdata->rx_mode = KISS_MODE_NOT_STARTED;
 
 			break;
-
 		}
-
 	}
-
 }
 
 int csp_kiss_add_interface(csp_iface_t * iface) {
@@ -219,14 +221,15 @@ int csp_kiss_add_interface(csp_iface_t * iface) {
 		return CSP_ERR_INVAL;
 	}
 
-        csp_kiss_interface_data_t * ifdata = iface->interface_data;
+	csp_kiss_interface_data_t * ifdata = iface->interface_data;
+
 	if (ifdata->tx_func == NULL) {
 		return CSP_ERR_INVAL;
 	}
 
 	if (csp_mutex_create(&ifdata->lock) != CSP_MUTEX_OK) {
 		return CSP_ERR_NOMEM;
-        }
+	}
 
 	ifdata->max_rx_length = CSP_HEADER_LENGTH + csp_buffer_data_size(); // CSP header + CSP data
 	ifdata->rx_length = 0;
@@ -234,10 +237,11 @@ int csp_kiss_add_interface(csp_iface_t * iface) {
 	ifdata->rx_first = false;
 	ifdata->rx_packet = NULL;
 
-        const unsigned int max_data_size = csp_buffer_data_size() - sizeof(uint32_t); // compensate for the added CRC32
-        if ((iface->mtu == 0) || (iface->mtu > max_data_size)) {
-            iface->mtu = max_data_size;
-        }
+	const unsigned int max_data_size = csp_buffer_data_size() - sizeof(uint32_t); // compensate for the added CRC32
+
+	if ((iface->mtu == 0) || (iface->mtu > max_data_size)) {
+		iface->mtu = max_data_size;
+	}
 
 	iface->nexthop = csp_kiss_tx;
 

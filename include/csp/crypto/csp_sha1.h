@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
    Code originally from Python's SHA1 Module, who based it on libtom.org.
 */
-
+#include <stdint.h>
 #include <csp/csp_types.h>
 
 #ifdef __cplusplus
@@ -44,13 +44,13 @@ extern "C" {
    SHA1 state.
 */
 typedef struct {
-        //! Internal SHA1 state.
+	//! Internal SHA1 state.
 	uint64_t length;
-        //! Internal SHA1 state.
+	//! Internal SHA1 state.
 	uint32_t state[5];
-        //! Internal SHA1 state.
+	//! Internal SHA1 state.
 	uint32_t curlen;
-        //! Internal SHA1 state.
+	//! Internal SHA1 state.
 	uint8_t  buf[CSP_SHA1_BLOCKSIZE];
 } csp_sha1_state;
 
@@ -86,4 +86,5 @@ void csp_sha1_memory(const void * data, uint32_t length, uint8_t * sha1);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_CRYPTO_SHA1_H_

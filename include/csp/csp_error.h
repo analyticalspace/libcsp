@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /**
    @file
-
    Error codes.
 */
 
@@ -45,16 +44,17 @@ extern "C" {
 #define CSP_ERR_ALREADY		-7		/**< Connection already in progress */
 #define CSP_ERR_RESET		-8		/**< Connection reset */
 #define CSP_ERR_NOBUFS		-9		/**< No more buffer space available */
-#define CSP_ERR_TX		-10		/**< Transmission failed */
+#define CSP_ERR_TX			-10		/**< Transmission failed */
 #define CSP_ERR_DRIVER		-11		/**< Error in driver layer */
 #define CSP_ERR_AGAIN		-12		/**< Resource temporarily unavailable */
-#define CSP_ERR_HMAC		-100		/**< HMAC failed */
-#define CSP_ERR_XTEA		-101		/**< XTEA failed */
-#define CSP_ERR_CRC32		-102		/**< CRC32 failed */
-#define CSP_ERR_SFP		-103		/**< SFP protocol error or inconsistency */
+#define CSP_ERR_HMAC		-100	/**< HMAC failed */
+#define CSP_ERR_XTEA		-101	/**< XTEA failed */
+#define CSP_ERR_CRC32		-102	/**< CRC32 failed */
+#define CSP_ERR_SFP			-103	/**< SFP protocol error or inconsistency */
 /**@}*/
 
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_ERROR_H_

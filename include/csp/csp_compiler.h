@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -18,43 +18,27 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _CSP_ARCH_POSIX_CSP_SYSTEM_H_
-#define _CSP_ARCH_POSIX_CSP_SYSTEM_H_
+#ifndef _CSP_COMPILER_H_
+#define _CSP_COMPILER_H_
 
-/**
-   @file
-
-   Posix extension to system interface.
-*/
-
-#include <csp/arch/csp_system.h>
-
-#ifdef __cplusplus
-yextern "C" {
+#ifdef __GNUC__ /* gcc and clang should support these */
+#	define CSP_COMPILER_WEAK		__attribute__((weak))
+#	define CSP_COMPILER_UNUSED		__attribute__((unused))
+#	define CSP_COMPILER_PACKED		__attribute__((packed))
+#	define CSP_COMPILER_ALIGNED(N)	__attribute__((aligned(N)))
+#	define CSP_COMPILER_CONST		__attribute__((__const__))
+#else
+#	define CSP_COMPILER_WEAK
+#	define CSP_COMPILER_UNUSED
+#	define CSP_COMPILER_PACKED
+#	define CSP_COMPILER_ALIGNED(N)
+#	define CSP_COMPILER_CONST
 #endif
 
-/**
-   Executes 'system("reboot")' for system reboot.
-*/
-int csp_sys_reboot_using_system(void);
-
-/**
-   Executes 'sync() and reboot(LINUX_REBOOT_CMD_RESTART)' for system reboot.
-*/
-int csp_sys_reboot_using_reboot(void);
-
-/**
-   Executes 'system("halt")' for system shutdown.
-*/
-int csp_sys_shutdown_using_system(void);
-
-/**
-   Executes 'sync() and reboot(LINUX_REBOOT_CMD_HALT)' for system shutdown.
-*/
-int csp_sys_shutdown_using_reboot(void);
-
-#ifdef __cplusplus
-}
+#if __GNUC__ >= 7
+#	define CSP_COMPILER_FALLTHROUGH __attribute__((fallthrough))
+#else
+#	define CSP_COMPILER_FALLTHROUGH (void)0
 #endif
 
-#endif // _CSP_ARCH_POSIX_CSP_SYSTEM_H_
+#endif // _CSP_COMPILER_H_

@@ -18,7 +18,14 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#ifndef _CSP_RTABLE_INTERNAL_H_
+#define _CSP_RTABLE_INTERNAL_H_
+
+#include <stdint.h>
+
 #include <csp/csp_rtable.h>
 
 /* Internal set route - after common validation by csp_rtable_set(...) */
 int csp_rtable_set_internal(uint8_t address, uint8_t netmask, csp_iface_t *ifc, uint8_t via);
+
+#endif // _CSP_RTABLE_INTERNAL_H_

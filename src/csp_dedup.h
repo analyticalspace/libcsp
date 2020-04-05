@@ -18,9 +18,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef CSP_DEDUP_H_
-#define CSP_DEDUP_H_
+#ifndef _CSP_DEDUP_H_
+#define _CSP_DEDUP_H_
 
+#include <stdbool.h>
 #include <csp/csp_types.h>
 
 /**
@@ -30,4 +31,4 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 bool csp_dedup_is_duplicate(csp_packet_t *packet);
 
-#endif /* CSP_DEDUP_H_ */
+#endif /* _CSP_DEDUP_H_ */

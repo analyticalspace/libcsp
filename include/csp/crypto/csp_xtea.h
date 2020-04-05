@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    XTEA support.
 */
 
+#include <stdint.h>
 #include <csp/csp_types.h>
 
 #ifdef __cplusplus
@@ -71,8 +72,9 @@ int csp_xtea_decrypt(void * encrypted, uint32_t len, uint32_t iv[2]);
    @return #CSP_ERR_NONE on success, otherwise an error code.
 */
 int csp_xtea_decrypt_packet(csp_packet_t * packet);
-    
+
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_CRYPTO_XTEA_H_

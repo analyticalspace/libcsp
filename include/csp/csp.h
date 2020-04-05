@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    CSP.
 */
 
+#include <stdint.h>
+#include <sys/types.h>
+
 #include <csp/csp_platform.h>
 #include <csp/csp_error.h>
 #include <csp/csp_debug.h>
@@ -44,7 +47,6 @@ extern "C" {
    @see csp_init()
 */
 typedef struct csp_conf_s {
-
 	uint8_t address;		/**< CSP address of the system */
 
 	const char *hostname;		/**< Host name, returned by the #CSP_CMP_IDENT request */
@@ -164,7 +166,8 @@ int csp_send_prio(uint8_t prio, csp_conn_t *conn, csp_packet_t *packet, uint32_t
    @param[in] opts connection options, see @ref CSP_CONNECTION_OPTIONS.
    @return 1 or reply size on success, 0 on failure (error, incoming length does not match, timeout)
 */
-int csp_transaction_w_opts(uint8_t prio, uint8_t dst, uint8_t dst_port, uint32_t timeout, void *outbuf, int outlen, void *inbuf, int inlen, uint32_t opts);
+int csp_transaction_w_opts(uint8_t prio, uint8_t dst, uint8_t dst_port, uint32_t timeout,
+							void *outbuf, int outlen, void *inbuf, int inlen, uint32_t opts);
 
 /**
    Perform an entire request & reply transaction.
@@ -488,4 +491,6 @@ void csp_cmp_set_memcpy(csp_memcpy_fnc_t fnc);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_H_
+

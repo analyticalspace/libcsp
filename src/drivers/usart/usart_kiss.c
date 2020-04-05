@@ -18,13 +18,12 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/interfaces/csp_if_kiss.h>
-
-#include <stdio.h>
+#include <sys/types.h>
 
 #include <csp/csp.h>
 #include <csp/drivers/usart.h>
 #include <csp/arch/csp_malloc.h>
+#include <csp/interfaces/csp_if_kiss.h>
 
 typedef struct {
 	char name[CSP_IFLIST_NAME_MAX + 1];
@@ -36,9 +35,11 @@ typedef struct {
 static int kiss_driver_tx(void *driver_data, const unsigned char * data, size_t data_length) {
 
 	kiss_context_t * ctx = driver_data;
+
 	if (csp_usart_write(ctx->fd, data, data_length) == (int) data_length) {
 		return CSP_ERR_NONE;
 	}
+
 	return CSP_ERR_TX;
 }
 
@@ -58,15 +59,18 @@ int csp_usart_open_and_add_kiss_interface(const csp_usart_conf_t *conf, const ch
 			ifname, conf->device, conf->baudrate);
 
 	kiss_context_t * ctx = csp_calloc(1, sizeof(*ctx));
+
 	if (ctx == NULL) {
 		return CSP_ERR_NOMEM;
 	}
 
 	strncpy(ctx->name, ifname, sizeof(ctx->name) - 1);
+
 	ctx->iface.name = ctx->name;
 	ctx->iface.driver_data = ctx;
 	ctx->iface.interface_data = &ctx->ifdata;
 	ctx->ifdata.tx_func = kiss_driver_tx;
+
 #if (CSP_WINDOWS)
 	ctx->fd = NULL;
 #else
@@ -74,6 +78,7 @@ int csp_usart_open_and_add_kiss_interface(const csp_usart_conf_t *conf, const ch
 #endif
 
 	int res = csp_kiss_add_interface(&ctx->iface);
+
 	if (res == CSP_ERR_NONE) {
 		res = csp_usart_open(conf, kiss_driver_rx, ctx, &ctx->fd);
 	}

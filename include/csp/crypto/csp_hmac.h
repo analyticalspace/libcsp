@@ -27,7 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
    Hash-based Message Authentication Code - based on code from libtom.org.
 */
-
+#include <stdint.h>
+#include <stdbool.h>
 #include <csp/crypto/csp_sha1.h>
 
 #ifdef __cplusplus
@@ -79,4 +80,5 @@ int csp_hmac_set_key(const void * key, uint32_t keylen);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_CRYPTO_HMAC_H_

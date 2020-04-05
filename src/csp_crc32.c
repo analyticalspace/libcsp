@@ -18,8 +18,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/csp_crc32.h>
+#include <stdint.h>
+#include <string.h>
 
+#include <csp/csp_crc32.h>
 #include <csp/csp_endian.h>
 
 #ifdef __AVR__
@@ -59,20 +61,22 @@ static const uint32_t crc_tab[256] = {
 		0xE330A81A, 0x115B2B19, 0x020BD8ED, 0xF0605BEE, 0x24AA3F05, 0xD6C1BC06, 0xC5914FF2, 0x37FACCF1,
 		0x69E9F0D5, 0x9B8273D6, 0x88D28022, 0x7AB90321, 0xAE7367CA, 0x5C18E4C9, 0x4F48173D, 0xBD23943E,
 		0xF36E6F75, 0x0105EC76, 0x12551F82, 0xE03E9C81, 0x34F4F86A, 0xC69F7B69, 0xD5CF889D, 0x27A40B9E,
-		0x79B737BA, 0x8BDCB4B9, 0x988C474D, 0x6AE7C44E, 0xBE2DA0A5, 0x4C4623A6, 0x5F16D052, 0xAD7D5351 };
+		0x79B737BA, 0x8BDCB4B9, 0x988C474D, 0x6AE7C44E, 0xBE2DA0A5, 0x4C4623A6, 0x5F16D052, 0xAD7D5351
+};
 
 uint32_t csp_crc32_memory(const uint8_t * data, uint32_t length) {
-   uint32_t crc;
 
-   crc = 0xFFFFFFFF;
-   while (length--)
+	uint32_t crc = 0xFFFFFFFF;
+
+	while (length--) {
 #ifdef __AVR__
-	   crc = pgm_read_dword(&crc_tab[(crc ^ *data++) & 0xFFL]) ^ (crc >> 8);
+		crc = pgm_read_dword(&crc_tab[(crc ^ *data++) & 0xFFL]) ^ (crc >> 8);
 #else
-	   crc = crc_tab[(crc ^ *data++) & 0xFFL] ^ (crc >> 8);
+		crc = crc_tab[(crc ^ *data++) & 0xFFL] ^ (crc >> 8);
 #endif
+	}
 
-   return (crc ^ 0xFFFFFFFF);
+	return (crc ^ 0xFFFFFFFF);
 }
 
 int csp_crc32_append(csp_packet_t * packet, bool include_header) {
@@ -97,7 +101,6 @@ int csp_crc32_append(csp_packet_t * packet, bool include_header) {
 	packet->length += sizeof(crc);
 
 	return CSP_ERR_NONE;
-
 }
 
 int csp_crc32_verify(csp_packet_t * packet, bool include_header) {
@@ -125,6 +128,5 @@ int csp_crc32_verify(csp_packet_t * packet, bool include_header) {
 	/* Strip CRC32 */
 	packet->length -= sizeof(crc);
 	return CSP_ERR_NONE;
-
 }
 

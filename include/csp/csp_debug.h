@@ -26,10 +26,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Debug and log.
 */
 
-#include <inttypes.h>
-#include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <inttypes.h>
 
 #include <csp/csp_types.h>
 
@@ -69,22 +70,22 @@ extern bool csp_debug_level_enabled[];
 /**
    Implement csp_assert_fail_action to override default failure action
 */
-extern void __attribute__((weak)) csp_assert_fail_action(const char *assertion, const char *file, int line);
+extern void CSP_COMPILER_WEAK csp_assert_fail_action(const char *assertion, const char *file, int line);
 
 /**
    CSP assert.
 */
 #if (!defined(NDEBUG) || CSP_USE_ASSERT)
-#define csp_assert(exp) {                                       				        \
-		if (!(exp)) {										\
-			const char *assertion = #exp;							\
+#define csp_assert(exp) {												\
+		if (!(exp)) {													\
+			const char *assertion = #exp;								\
 			const char *file = BASENAME(__FILE__);						\
-			int line = __LINE__;								\
-			printf("\E[1;31mAssertion \'%s\' failed in %s:%d\E[0m\r\n",			\
-			       assertion, file, line);							\
-			if (csp_assert_fail_action)							\
-				csp_assert_fail_action(assertion, file, line);				\
-		}											\
+			int line = __LINE__;										\
+			printf("\E[1;31mAssertion \'%s\' failed in %s:%d\E[0m\r\n", \
+				   assertion, file, line);								\
+			if (csp_assert_fail_action)									\
+				csp_assert_fail_action(assertion, file, line);			\
+		}																\
 	}
 #else
 #define csp_assert(...) {}
@@ -114,20 +115,20 @@ extern void __attribute__((weak)) csp_assert_fail_action(const char *assertion, 
 #endif // __DOXYGEN__
 
 #ifdef __AVR__
-        #include <stdio.h>
-	#include <avr/pgmspace.h>
-	#define CONSTSTR(data) PSTR(data)
-	#undef printf
-	#undef sscanf
-	#undef scanf
-	#undef sprintf
-	#undef snprintf
-	#define printf(s, ...) printf_P(PSTR(s), ## __VA_ARGS__)
-	#define sscanf(buf, s, ...) sscanf_P(buf, PSTR(s), ## __VA_ARGS__)
-	#define scanf(s, ...) scanf_P(PSTR(s), ## __VA_ARGS__)
-	#define sprintf(buf, s, ...) sprintf_P(buf, PSTR(s), ## __VA_ARGS__)
-	#define snprintf(buf, size, s, ...) snprintf_P(buf, size, PSTR(s), ## __VA_ARGS__)
-#define csp_debug(level, format, ...) { if (CSP_DEBUG && csp_debug_level_enabled[level]) do_csp_debug(level, PSTR(format), ##__VA_ARGS__); }
+#	include <stdio.h>
+#	include <avr/pgmspace.h>
+#	define CONSTSTR(data) PSTR(data)
+#	undef printf
+#	undef sscanf
+#	undef scanf
+#	undef sprintf
+#	undef snprintf
+#	define printf(s, ...) printf_P(PSTR(s), ## __VA_ARGS__)
+#	define sscanf(buf, s, ...) sscanf_P(buf, PSTR(s), ## __VA_ARGS__)
+#	define scanf(s, ...) scanf_P(PSTR(s), ## __VA_ARGS__)
+#	define sprintf(buf, s, ...) sprintf_P(buf, PSTR(s), ## __VA_ARGS__)
+#	define snprintf(buf, size, s, ...) snprintf_P(buf, size, PSTR(s), ## __VA_ARGS__)
+#	define csp_debug(level, format, ...) { if (CSP_DEBUG && csp_debug_level_enabled[level]) do_csp_debug(level, PSTR(format), ##__VA_ARGS__); }
 #else
 /**
  * Log message with specific level.
@@ -141,19 +142,19 @@ extern void __attribute__((weak)) csp_assert_fail_action(const char *assertion, 
  * Log message with level #CSP_ERROR.
  * @param format log message, printf syntax.
  */
-#define csp_log_error(format, ...)    { if (CSP_LOG_LEVEL_ERROR) csp_debug(CSP_ERROR, format, ##__VA_ARGS__); }
+#define csp_log_error(format, ...)	  { if (CSP_LOG_LEVEL_ERROR) csp_debug(CSP_ERROR, format, ##__VA_ARGS__); }
 
 /**
  * Log message with level #CSP_WARN.
  * @param format log message, printf syntax.
  */
-#define csp_log_warn(format, ...)     { if (CSP_LOG_LEVEL_WARN) csp_debug(CSP_WARN, format, ##__VA_ARGS__); }
+#define csp_log_warn(format, ...)	  { if (CSP_LOG_LEVEL_WARN) csp_debug(CSP_WARN, format, ##__VA_ARGS__); }
 
 /**
  * Log message with level #CSP_INFO.
  * @param format log message, printf syntax.
  */
-#define csp_log_info(format, ...)     { if (CSP_LOG_LEVEL_INFO) csp_debug(CSP_INFO, format, ##__VA_ARGS__); }
+#define csp_log_info(format, ...)	  { if (CSP_LOG_LEVEL_INFO) csp_debug(CSP_INFO, format, ##__VA_ARGS__); }
 
 /**
  * Log message with level #CSP_BUFFER.
@@ -177,7 +178,7 @@ extern void __attribute__((weak)) csp_assert_fail_action(const char *assertion, 
  * Log message with level #CSP_LOCK.
  * @param format log message, printf syntax.
  */
-#define csp_log_lock(format, ...)     { if (CSP_LOG_LEVEL_DEBUG) csp_debug(CSP_LOCK, format, ##__VA_ARGS__); }
+#define csp_log_lock(format, ...)	  { if (CSP_LOG_LEVEL_DEBUG) csp_debug(CSP_LOCK, format, ##__VA_ARGS__); }
 
 /**
  * Do the actual logging (don't use directly).
@@ -221,4 +222,5 @@ void csp_debug_hook_set(csp_debug_hook_func_t f);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_DEBUG_H_

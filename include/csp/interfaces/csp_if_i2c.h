@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    I2C interface.
 */
 
+#include <stdint.h>
 #include <csp/csp_interface.h>
 
 #ifdef __cplusplus
@@ -43,20 +44,20 @@ extern "C" {
    This struct fits on top of a #csp_packet_t, removing the need for copying data.
 */
 typedef struct i2c_frame_s {
-    //! Not used  (-> csp_packet_t.padding)
-    uint8_t padding[3];
-    //! Cleared before Tx  (-> csp_packet_t.padding)
-    uint8_t retries;
-    //! Not used  (-> csp_packet_t.padding)
-    uint32_t reserved;
-    //! Destination address  (-> csp_packet_t.padding)
-    uint8_t dest;
-    //! Cleared before Tx  (-> csp_packet_t.padding)
-    uint8_t len_rx;
-    //! Length of \a data part  (-> csp_packet_t.length)
-    uint16_t len;
-    //! CSP id + data  (-> csp_packet_t.id)
-    uint8_t data[0];
+	//! Not used  (-> csp_packet_t.padding)
+	uint8_t padding[3];
+	//! Cleared before Tx  (-> csp_packet_t.padding)
+	uint8_t retries;
+	//! Not used  (-> csp_packet_t.padding)
+	uint32_t reserved;
+	//! Destination address  (-> csp_packet_t.padding)
+	uint8_t dest;
+	//! Cleared before Tx  (-> csp_packet_t.padding)
+	uint8_t len_rx;
+	//! Length of \a data part	(-> csp_packet_t.length)
+	uint16_t len;
+	//! CSP id + data  (-> csp_packet_t.id)
+	uint8_t data[0];
 } csp_i2c_frame_t;
 
 /**
@@ -76,8 +77,8 @@ typedef int (*csp_i2c_driver_tx_f)(void * driver_data, csp_i2c_frame_t * frame);
    Interface data (state information).
 */
 typedef struct {
-    /** Tx function */
-    csp_i2c_driver_tx_f tx_func;
+	/** Tx function */
+	csp_i2c_driver_tx_f tx_func;
 } csp_i2c_interface_data_t;
 
 /**
@@ -113,4 +114,5 @@ void csp_i2c_rx(csp_iface_t * iface, csp_i2c_frame_t * frame, void * pxTaskWoken
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_IF_I2C_H_

@@ -18,16 +18,16 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "csp_port.h"
-
 #include <stdlib.h>
-#include <stdio.h>
+#include <stdint.h>
 #include <string.h>
+#include <sys/types.h>
 
 #include <csp/csp.h>
 #include <csp/arch/csp_queue.h>
 #include <csp/arch/csp_malloc.h>
 
+#include "csp_port.h"
 #include "csp_conn.h"
 #include "csp_init.h"
 
@@ -50,22 +50,20 @@ csp_socket_t * csp_port_get_socket(unsigned int port) {
 	}
 
 	return NULL;
-
 }
 
 int csp_port_init(void) {
 
 	ports = csp_calloc(csp_conf.port_max_bind + 2, sizeof(*ports)); // +2 for max port and CSP_ANY
+
 	if (ports == NULL) {
 		return CSP_ERR_NOMEM;
 	}
 
 	return CSP_ERR_NONE;
-
 }
 
 void csp_port_free_resources(void) {
-
 	csp_free(ports);
 	ports = NULL;
 }
@@ -79,10 +77,9 @@ int csp_listen(csp_socket_t * socket, size_t backlog) {
 	if (socket->socket == NULL)
 		return CSP_ERR_NOMEM;
 
-        socket->opts |= CSP_SO_INTERNAL_LISTEN;
+	socket->opts |= CSP_SO_INTERNAL_LISTEN;
 
 	return CSP_ERR_NONE;
-
 }
 
 int csp_bind(csp_socket_t * socket, uint8_t port) {
@@ -93,7 +90,8 @@ int csp_bind(csp_socket_t * socket, uint8_t port) {
 	if (port == CSP_ANY) {
 		port = csp_conf.port_max_bind + 1;
 	} else if (port > csp_conf.port_max_bind) {
-		csp_log_error("csp_bind: invalid port %u, only ports from 0-%u (+ CSP_ANY for default) are available for incoming ports", port, csp_conf.port_max_bind);
+		csp_log_error("csp_bind: invalid port %u, only ports from 0-%u (+ CSP_ANY for default) are available for incoming ports",
+					  port, csp_conf.port_max_bind);
 		return CSP_ERR_INVAL;
 	}
 
@@ -109,7 +107,5 @@ int csp_bind(csp_socket_t * socket, uint8_t port) {
 	ports[port].state = PORT_OPEN;
 
 	return CSP_ERR_NONE;
-
 }
-
 

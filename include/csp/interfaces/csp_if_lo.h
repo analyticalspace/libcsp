@@ -18,8 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _CSP_IF_LO_H_
-#define _CSP_IF_LO_H_
+#ifndef _CSP_INTERFACES_CSP_IF_LO_H_
+#define _CSP_INTERFACES_CSP_IF_LO_H_
 
 /**
    @file
@@ -46,4 +46,5 @@ extern csp_iface_t csp_if_lo;
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_INTERFACES_CSP_IF_LO_H_

@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Endian support.
 */
 
+#include <stdint.h>
 #include <csp/csp_types.h>
 
 #ifdef __cplusplus
@@ -145,4 +146,5 @@ double csp_ntohdbl(double d);
 #ifdef __cplusplus
 }
 #endif
+
 #endif // _CSP_ENDIAN_H_

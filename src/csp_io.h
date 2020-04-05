@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_IO_H_
 #define _CSP_IO_H_
 
+#include <stdint.h>
 #include <csp/csp.h>
 
 #ifdef __cplusplus
@@ -41,4 +42,5 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_route_t * i
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_IO_H_

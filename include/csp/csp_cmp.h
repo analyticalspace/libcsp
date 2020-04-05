@@ -26,7 +26,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    CSP Management Protocol (CMP).
 */
 
+#include <stdint.h>
+
 #include <csp/csp.h>
+#include <csp/csp_compiler.h>
 #include <csp/arch/csp_clock.h>
 
 #ifdef __cplusplus
@@ -44,7 +47,7 @@ extern "C" {
 /**
    CMP reply.
 */
-#define CSP_CMP_REPLY   0xff
+#define CSP_CMP_REPLY	0xff
 /**@}*/
 
 /**
@@ -112,10 +115,10 @@ extern "C" {
    CSP management protocol description.
 */
 struct csp_cmp_message {
-        //! CMP request type.
-        uint8_t type;
-        //! CMP request code.
-        uint8_t code;
+	//! CMP request type.
+	uint8_t type;
+	//! CMP request code.
+	uint8_t code;
 	union {
 		struct {
 			char hostname[CSP_HOSTNAME_LEN];
@@ -129,7 +132,7 @@ struct csp_cmp_message {
 			uint8_t next_hop_via;
 			char interface[CSP_CMP_ROUTE_IFACE_LEN];
 		} route_set;
-		struct __attribute__((__packed__)) {
+		struct CSP_COMPILER_PACKED {
 			char interface[CSP_CMP_ROUTE_IFACE_LEN];
 			uint32_t tx;
 			uint32_t rx;
@@ -154,12 +157,15 @@ struct csp_cmp_message {
 		} poke;
 		csp_timestamp_t clock;
 	};
-} __attribute__ ((packed));
+} CSP_COMPILER_PACKED;
 
 /**
    Macro for calculating total size of management message.
 */
-#define CMP_SIZE(_memb) (sizeof(((struct csp_cmp_message *)0)->type) + sizeof(((struct csp_cmp_message *)0)->code) + sizeof(((struct csp_cmp_message *)0)->_memb))
+#define CMP_SIZE(_memb)								\
+	(sizeof(((struct csp_cmp_message *)0)->type)	\
+	 + sizeof(((struct csp_cmp_message *)0)->code)	\
+	 + sizeof(((struct csp_cmp_message *)0)->_memb))
 
 /**
    Generic send management message request.
@@ -176,9 +182,9 @@ int csp_cmp(uint8_t node, uint32_t timeout, uint8_t code, int msg_size, struct c
    Macro for defining management handling function.
 */
 #define CMP_MESSAGE(_code, _memb) \
-static inline int csp_cmp_##_memb(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg) { \
-	return csp_cmp(node, timeout, _code, CMP_SIZE(_memb), msg); \
-}
+	static inline int csp_cmp_##_memb(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg) { \
+		return csp_cmp(node, timeout, _code, CMP_SIZE(_memb), msg); \
+	}
 
 CMP_MESSAGE(CSP_CMP_IDENT, ident)
 CMP_MESSAGE(CSP_CMP_ROUTE_SET, route_set)
@@ -194,7 +200,7 @@ CMP_MESSAGE(CSP_CMP_CLOCK, clock)
    @return #CSP_ERR_NONE on success, otherwise an error code.
 */
 static inline int csp_cmp_peek(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg) {
-    return csp_cmp(node, timeout, CSP_CMP_PEEK, CMP_SIZE(peek) - sizeof(msg->peek.data) + msg->peek.len, msg);
+	return csp_cmp(node, timeout, CSP_CMP_PEEK, CMP_SIZE(peek) - sizeof(msg->peek.data) + msg->peek.len, msg);
 }
 
 /**
@@ -205,10 +211,11 @@ static inline int csp_cmp_peek(uint8_t node, uint32_t timeout, struct csp_cmp_me
    @return #CSP_ERR_NONE on success, otherwise an error code.
 */
 static inline int csp_cmp_poke(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg) {
-    return csp_cmp(node, timeout, CSP_CMP_POKE, CMP_SIZE(poke) - sizeof(msg->poke.data) + msg->poke.len, msg);
+	return csp_cmp(node, timeout, CSP_CMP_POKE, CMP_SIZE(poke) - sizeof(msg->poke.data) + msg->poke.len, msg);
 }
 
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_CMP_H_

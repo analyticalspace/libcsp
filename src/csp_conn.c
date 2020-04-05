@@ -18,16 +18,18 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "csp_conn.h"
-
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
+#include <sys/types.h>
 
 #include <csp/csp.h>
 #include <csp/arch/csp_queue.h>
 #include <csp/arch/csp_semaphore.h>
 #include <csp/arch/csp_malloc.h>
 #include <csp/arch/csp_time.h>
+
+#include "csp_conn.h"
 #include "csp_init.h"
 #include "transport/csp_transport.h"
 
@@ -67,10 +69,11 @@ int csp_conn_get_rxq(int prio) {
 
 int csp_conn_enqueue_packet(csp_conn_t * conn, csp_packet_t * packet) {
 
+	int rxq;
+
 	if (!conn)
 		return CSP_ERR_INVAL;
 
-	int rxq;
 	if (packet != NULL) {
 		rxq = csp_conn_get_rxq(packet->id.pri);
 	} else {
@@ -78,15 +81,19 @@ int csp_conn_enqueue_packet(csp_conn_t * conn, csp_packet_t * packet) {
 	}
 
 	if (csp_queue_enqueue(conn->rx_queue[rxq], &packet, 0) != CSP_QUEUE_OK) {
-		csp_log_error("RX queue %p full with %u items", conn->rx_queue[rxq], csp_queue_size(conn->rx_queue[rxq]));
+		csp_log_error("RX queue %p full with %u items",
+					  conn->rx_queue[rxq], csp_queue_size(conn->rx_queue[rxq]));
 		return CSP_ERR_NOMEM;
 	}
 
 #if (CSP_USE_QOS)
-	int event = 0;
-	if (csp_queue_enqueue(conn->rx_event, &event, 0) != CSP_QUEUE_OK) {
-		csp_log_error("QOS event queue full");
-		return CSP_ERR_NOMEM;
+	{
+		int event = 0;
+
+		if (csp_queue_enqueue(conn->rx_event, &event, 0) != CSP_QUEUE_OK) {
+			csp_log_error("QOS event queue full");
+			return CSP_ERR_NOMEM;
+		}
 	}
 #endif
 
@@ -95,9 +102,13 @@ int csp_conn_enqueue_packet(csp_conn_t * conn, csp_packet_t * packet) {
 
 int csp_conn_init(void) {
 
+	int i;
+	int prio;
+
 	arr_conn = csp_calloc(csp_conf.conn_max, sizeof(*arr_conn));
+
 	if (arr_conn == NULL) {
-		csp_log_error("Allocation for %u connections failed", csp_conf.conn_max);
+		csp_log_error("Allocation for %u connection failed", csp_conf.conn_max);
 		return CSP_ERR_NOMEM;
 	}
 
@@ -115,9 +126,10 @@ int csp_conn_init(void) {
 		return CSP_ERR_NOMEM;
 	}
 
-	for (int i = 0; i < csp_conf.conn_max; i++) {
+	for (i = 0; i < csp_conf.conn_max; i++) {
 		csp_conn_t * conn = &arr_conn[i];
-		for (int prio = 0; prio < CSP_RX_QUEUES; prio++) {
+
+		for (prio = 0; prio < CSP_RX_QUEUES; prio++) {
 			conn->rx_queue[prio] = csp_queue_create(csp_conf.conn_queue_length, sizeof(csp_packet_t *));
 			if (conn->rx_queue[prio] == NULL) {
 				csp_log_error("rx_queue = csp_queue_create() failed");
@@ -127,6 +139,7 @@ int csp_conn_init(void) {
 
 #if (CSP_USE_QOS)
 		conn->rx_event = csp_queue_create(csp_conf.conn_queue_length, sizeof(int));
+
 		if (conn->rx_event == NULL) {
 			csp_log_error("rx_event = csp_queue_create() failed");
 			return CSP_ERR_NOMEM;
@@ -142,66 +155,72 @@ int csp_conn_init(void) {
 	}
 
 	return CSP_ERR_NONE;
-
 }
 
 void csp_conn_free_resources(void) {
 
-    if (arr_conn) {
+	unsigned int i;
+	int prio;
 
-	for (unsigned int i = 0; i < csp_conf.conn_max; i++) {
-            csp_conn_t * conn = &arr_conn[i];
+	if (arr_conn) {
+		for (i = 0; i < csp_conf.conn_max; i++) {
+			csp_conn_t * conn = &arr_conn[i];
 
-            for (int prio = 0; prio < CSP_RX_QUEUES; prio++) {
-                if (conn->rx_queue[prio]) {
-                    csp_queue_remove(conn->rx_queue[prio]);
-                }
-            }
+			for (prio = 0; prio < CSP_RX_QUEUES; prio++) {
+				if (conn->rx_queue[prio]) {
+					csp_queue_remove(conn->rx_queue[prio]);
+				}
+			}
 
 #if (CSP_USE_QOS)
-            if (conn->rx_event) {
-                csp_queue_remove(conn->rx_event);
-            }
+			if (conn->rx_event) {
+				csp_queue_remove(conn->rx_event);
+			}
 #endif
 
 #if (CSP_USE_RDP)
-            csp_rdp_free_resources(conn);
+			csp_rdp_free_resources(conn);
 #endif
+		}
+
+		csp_free(arr_conn);
+		arr_conn = NULL;
+
+		//csp_bin_sem_remove(&conn_lock);
+		memset(&conn_lock, 0, sizeof(conn_lock));
+
+		//csp_bin_sem_remove(&sport_lock);
+		memset(&sport_lock, 0, sizeof(sport_lock));
+
+		sport = 0;
 	}
-
-        csp_free(arr_conn);
-        arr_conn = NULL;
-
-        //csp_bin_sem_remove(&conn_lock);
-        memset(&conn_lock, 0, sizeof(conn_lock));
-
-        //csp_bin_sem_remove(&sport_lock);
-        memset(&sport_lock, 0, sizeof(sport_lock));
-
-        sport = 0;
-    }
 }
 
 csp_conn_t * csp_conn_find(uint32_t id, uint32_t mask) {
 
+	int i;
+
 	/* Search for matching connection */
 	id = (id & mask);
-	for (int i = 0; i < csp_conf.conn_max; i++) {
+
+	for (i = 0; i < csp_conf.conn_max; i++) {
 		csp_conn_t * conn = &arr_conn[i];
-		if ((conn->state == CONN_OPEN) && (conn->type == CONN_CLIENT) && ((conn->idin.ext & mask) == id)) {
+
+		if ((conn->state == CONN_OPEN) &&
+			(conn->type == CONN_CLIENT) &&
+			((conn->idin.ext & mask) == id))
+		{
 			return conn;
 		}
 	}
-	
-	return NULL;
 
+	return NULL;
 }
 
 static int csp_conn_flush_rx_queue(csp_conn_t * conn) {
 
-	csp_packet_t * packet;
-
 	int prio;
+	csp_packet_t * packet;
 
 	/* Flush packet queues */
 	for (prio = 0; prio < CSP_RX_QUEUES; prio++) {
@@ -212,12 +231,14 @@ static int csp_conn_flush_rx_queue(csp_conn_t * conn) {
 
 	/* Flush event queue */
 #if (CSP_USE_QOS)
-	int event;
-	while (csp_queue_dequeue(conn->rx_event, &event, 0) == CSP_QUEUE_OK);
+	{
+		int event;
+		while (csp_queue_dequeue(conn->rx_event, &event, 0) == CSP_QUEUE_OK)
+			;
+	}
 #endif
 
 	return CSP_ERR_NONE;
-
 }
 
 csp_conn_t * csp_conn_allocate(csp_conn_type_t type) {
@@ -232,7 +253,9 @@ csp_conn_t * csp_conn_allocate(csp_conn_type_t type) {
 	/* Search for free connection */
 	csp_conn_t * conn = NULL;
 	int i = csp_conn_last_given;
-	for (int j = 0; j < csp_conf.conn_max; j++) {
+	int j;
+
+	for (j = 0; j < csp_conf.conn_max; j++) {
 		i = (i + 1) % csp_conf.conn_max;
 		conn = &arr_conn[i];
 		if (conn->state == CONN_CLOSED) {
@@ -257,10 +280,10 @@ csp_conn_t * csp_conn_allocate(csp_conn_type_t type) {
 
 	if (conn == NULL) {
 		csp_log_error("No free connections, max %u", csp_conf.conn_max);
+		// TODO explicit return?
 	}
 
 	return conn;
-
 }
 
 csp_conn_t * csp_conn_new(csp_id_t idin, csp_id_t idout) {
@@ -270,7 +293,7 @@ csp_conn_t * csp_conn_new(csp_id_t idin, csp_id_t idout) {
 
 	if (conn) {
 		/* No lock is needed here, because nobody else *
-		 * has a reference to this connection yet.     */
+		 * has a reference to this connection yet.	   */
 		conn->idin.ext = idin.ext;
 		conn->idout.ext = idout.ext;
 		conn->timestamp = csp_get_ms();
@@ -280,11 +303,10 @@ csp_conn_t * csp_conn_new(csp_id_t idin, csp_id_t idout) {
 	}
 
 	return conn;
-
 }
 
 int csp_close(csp_conn_t * conn) {
-    return csp_conn_close(conn, CSP_RDP_CLOSED_BY_USERSPACE);
+	return csp_conn_close(conn, CSP_RDP_CLOSED_BY_USERSPACE);
 }
 
 int csp_conn_close(csp_conn_t * conn, uint8_t closed_by) {
@@ -319,10 +341,10 @@ int csp_conn_close(csp_conn_t * conn, uint8_t closed_by) {
 	/* Ensure connection queue is empty */
 	csp_conn_flush_rx_queue(conn);
 
-        if (conn->socket && (conn->type == CONN_SERVER) && (conn->opts & (CSP_SO_CONN_LESS | CSP_SO_INTERNAL_LISTEN))) {
+	if (conn->socket && (conn->type == CONN_SERVER) && (conn->opts & (CSP_SO_CONN_LESS | CSP_SO_INTERNAL_LISTEN))) {
 		csp_queue_remove(conn->socket);
 		conn->socket = NULL;
-        }
+	}
 
 	/* Reset RDP state */
 #if (CSP_USE_RDP)
@@ -409,6 +431,7 @@ csp_conn_t * csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t tim
 	}
 
 	const uint8_t start = sport;
+
 	while (++sport != start) {
 		if (sport > CSP_ID_PORT_MAX)
 			sport = csp_conf.port_max_bind + 1;
@@ -419,7 +442,7 @@ csp_conn_t * csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t tim
 		/* Match on destination port of _incoming_ identifier */
 		if (csp_conn_find(incoming_id.ext, CSP_ID_DPORT_MASK) == NULL) {
 			/* Break - we found an unused ephemeral port
-                           allocate connection while locked to mark port in use */
+			   allocate connection while locked to mark port in use */
 			conn = csp_conn_new(incoming_id, outgoing_id);
 			break;
 		}
@@ -449,37 +472,26 @@ csp_conn_t * csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t tim
 
 	/* We have a successful connection */
 	return conn;
-
 }
 
 int csp_conn_dport(csp_conn_t * conn) {
-
 	return conn->idin.dport;
-
 }
 
 int csp_conn_sport(csp_conn_t * conn) {
-
 	return conn->idin.sport;
-
 }
 
 int csp_conn_dst(csp_conn_t * conn) {
-
 	return conn->idin.dst;
-
 }
 
 int csp_conn_src(csp_conn_t * conn) {
-
 	return conn->idin.src;
-
 }
 
 int csp_conn_flags(csp_conn_t * conn) {
-
 	return conn->idin.flags;
-
 }
 
 #if (CSP_DEBUG)
@@ -518,7 +530,7 @@ int csp_conn_print_table_str(char * str_buf, int str_size) {
 
 	return CSP_ERR_NONE;
 }
-#endif
+#endif // CSP_DEBUG
 
 const csp_conn_t * csp_conn_get_array(size_t * size)
 {

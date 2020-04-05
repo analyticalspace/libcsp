@@ -18,6 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <stdint.h>
+
 #include "csp_promisc.h"
 
 #include <csp/csp.h>
@@ -44,7 +46,6 @@ int csp_promisc_enable(unsigned int queue_size) {
 
 	csp_promisc_enabled = 1;
 	return CSP_ERR_NONE;
-
 }
 
 void csp_promisc_disable(void) {
@@ -60,7 +61,6 @@ csp_packet_t * csp_promisc_read(uint32_t timeout) {
 	csp_queue_dequeue(csp_promisc_queue, &packet, timeout);
 
 	return packet;
-
 }
 
 void csp_promisc_add(csp_packet_t * packet) {
@@ -78,7 +78,6 @@ void csp_promisc_add(csp_packet_t * packet) {
 			}
 		}
 	}
-
 }
 
-#endif
+#endif // CSP_USE_PROMISC

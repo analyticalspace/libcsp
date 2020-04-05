@@ -18,11 +18,11 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/csp.h>
 
 #include <stdio.h>
 #include <string.h>
 
+#include <csp/csp.h>
 #include <csp/csp_cmp.h>
 #include <csp/csp_endian.h>
 #include <csp/csp_platform.h>
@@ -77,12 +77,12 @@ static int do_cmp_ident(struct csp_cmp_message *cmp) {
 	cmp->ident.model[CSP_MODEL_LEN - 1] = '\0';
 
 	return CSP_ERR_NONE;
-
 }
 
 static int do_cmp_route_set(struct csp_cmp_message *cmp) {
 
 	csp_iface_t *ifc = csp_iflist_get_by_name(cmp->route_set.interface);
+
 	if (ifc == NULL) {
 		return CSP_ERR_INVAL;
 	}
@@ -92,25 +92,25 @@ static int do_cmp_route_set(struct csp_cmp_message *cmp) {
 	}
 
 	return CSP_ERR_NONE;
-
 }
 
 static int do_cmp_if_stats(struct csp_cmp_message *cmp) {
 
 	csp_iface_t *ifc = csp_iflist_get_by_name(cmp->if_stats.interface);
+
 	if (ifc == NULL)
 		return CSP_ERR_INVAL;
 
-	cmp->if_stats.tx =       csp_hton32(ifc->tx);
-	cmp->if_stats.rx =       csp_hton32(ifc->rx);
+	cmp->if_stats.tx =		 csp_hton32(ifc->tx);
+	cmp->if_stats.rx =		 csp_hton32(ifc->rx);
 	cmp->if_stats.tx_error = csp_hton32(ifc->tx_error);
 	cmp->if_stats.rx_error = csp_hton32(ifc->rx_error);
-	cmp->if_stats.drop =     csp_hton32(ifc->drop);
+	cmp->if_stats.drop =	 csp_hton32(ifc->drop);
 	cmp->if_stats.autherr =  csp_hton32(ifc->autherr);
-	cmp->if_stats.frame =    csp_hton32(ifc->frame);
+	cmp->if_stats.frame =	 csp_hton32(ifc->frame);
 	cmp->if_stats.txbytes =  csp_hton32(ifc->txbytes);
 	cmp->if_stats.rxbytes =  csp_hton32(ifc->rxbytes);
-	cmp->if_stats.irq = 	 csp_hton32(ifc->irq);
+	cmp->if_stats.irq =		 csp_hton32(ifc->irq);
 
 	return CSP_ERR_NONE;
 }
@@ -118,41 +118,45 @@ static int do_cmp_if_stats(struct csp_cmp_message *cmp) {
 static int do_cmp_peek(struct csp_cmp_message *cmp) {
 
 	cmp->peek.addr = csp_hton32(cmp->peek.addr);
+
 	if (cmp->peek.len > CSP_CMP_PEEK_MAX_LEN)
 		return CSP_ERR_INVAL;
 
 	/* Dangerous, you better know what you are doing */
-	csp_cmp_memcpy_fnc((csp_memptr_t) (uintptr_t) cmp->peek.data, (csp_memptr_t) (uintptr_t) cmp->peek.addr, cmp->peek.len);
+	csp_cmp_memcpy_fnc((csp_memptr_t) (uintptr_t) cmp->peek.data,
+					   (csp_memptr_t) (uintptr_t) cmp->peek.addr, cmp->peek.len);
 
 	return CSP_ERR_NONE;
-
 }
 
 static int do_cmp_poke(struct csp_cmp_message *cmp) {
 
 	cmp->poke.addr = csp_hton32(cmp->poke.addr);
+
 	if (cmp->poke.len > CSP_CMP_POKE_MAX_LEN)
 		return CSP_ERR_INVAL;
 
 	/* Extremely dangerous, you better know what you are doing */
-	csp_cmp_memcpy_fnc((csp_memptr_t) (uintptr_t) cmp->poke.addr, (csp_memptr_t) (uintptr_t) cmp->poke.data, cmp->poke.len);
+	csp_cmp_memcpy_fnc((csp_memptr_t) (uintptr_t) cmp->poke.addr,
+					   (csp_memptr_t) (uintptr_t) cmp->poke.data, cmp->poke.len);
 
 	return CSP_ERR_NONE;
-
 }
 
 static int do_cmp_clock(struct csp_cmp_message *cmp) {
 
+	int res = CSP_ERR_NONE;
 	csp_timestamp_t clock;
 	clock.tv_sec = csp_ntoh32(cmp->clock.tv_sec);
 	clock.tv_nsec = csp_ntoh32(cmp->clock.tv_nsec);
 
-	int res = CSP_ERR_NONE;
 	if (clock.tv_sec != 0) {
 		// set time
 		res = csp_clock_set_time(&clock);
+
 		if (res != CSP_ERR_NONE) {
-			csp_log_warn("csp_clock_set_time(sec=%"PRIu32", nsec=%"PRIu32") failed, error: %d", clock.tv_sec, clock.tv_nsec, res);
+			csp_log_warn("csp_clock_set_time(sec=%"PRIu32", nsec=%"PRIu32") failed, error: %d",
+						 clock.tv_sec, clock.tv_nsec, res);
 		}
 	}
 
@@ -162,7 +166,6 @@ static int do_cmp_clock(struct csp_cmp_message *cmp) {
 	cmp->clock.tv_nsec = csp_hton32(clock.tv_nsec);
 
 	return res;
-
 }
 
 /* CSP Management Protocol handler */
@@ -215,8 +218,8 @@ static int csp_cmp_handler(csp_conn_t * conn, csp_packet_t * packet) {
 
 void csp_service_handler(csp_conn_t * conn, csp_packet_t * packet) {
 
-	switch (csp_conn_dport(conn)) {
-
+	switch (csp_conn_dport(conn))
+	{
 	case CSP_CMP:
 		/* Pass to CMP handler */
 		if (csp_cmp_handler(conn, packet) != CSP_ERR_NONE) {
@@ -334,5 +337,4 @@ void csp_service_handler(csp_conn_t * conn, csp_packet_t * packet) {
 		if (!csp_send(conn, packet, 0))
 			csp_buffer_free(packet);
 	}
-
 }

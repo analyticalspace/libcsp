@@ -18,8 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef CSP_QFIFO_H_
-#define CSP_QFIFO_H_
+#ifndef _CSP_QFIFO_H_
+#define _CSP_QFIFO_H_
 
 #include <csp/csp_interface.h>
 
@@ -55,4 +55,4 @@ int csp_qfifo_read(csp_qfifo_t * input);
  */
 void csp_qfifo_wake_up(void);
 
-#endif /* CSP_QFIFO_H_ */
+#endif /* _CSP_QFIFO_H_ */

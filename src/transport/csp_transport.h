@@ -45,4 +45,5 @@ void csp_rdp_free_resources(csp_conn_t * conn);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_TRANSPORT_H_

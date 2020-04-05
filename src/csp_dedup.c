@@ -18,18 +18,18 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "csp_dedup.h"
+#include <stdint.h>
 
-#include <stdlib.h>
+#include "csp_dedup.h"
 
 #include <csp/arch/csp_time.h>
 #include <csp/csp_crc32.h>
 
 /* Check the last CSP_DEDUP_COUNT packets for duplicates */
-#define CSP_DEDUP_COUNT		16
+#define CSP_DEDUP_COUNT		(16)
 
 /* Only consider packet a duplicate if received under CSP_DEDUP_WINDOW_MS ago */
-#define CSP_DEDUP_WINDOW_MS	1000
+#define CSP_DEDUP_WINDOW_MS	(1000)
 
 /* Store packet CRC's in a ringbuffer */
 static uint32_t csp_dedup_array[CSP_DEDUP_COUNT] = {};
@@ -43,7 +43,6 @@ bool csp_dedup_is_duplicate(csp_packet_t *packet)
 
 	/* Check if we have received this packet before */
 	for (int i = 0; i < CSP_DEDUP_COUNT; i++) {
-
 		/* Check for match */
 		if (crc == csp_dedup_array[i]) {
 

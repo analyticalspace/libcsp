@@ -18,8 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef LIB_CSP_SRC_CSP_INIT_H_
-#define LIB_CSP_SRC_CSP_INIT_H_
+#ifndef _CSP_INIT_H_
+#define _CSP_INIT_H_
 
 #include <csp/csp.h>
 
@@ -35,4 +35,5 @@ void csp_buffer_free_resources(void);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_INIT_H_

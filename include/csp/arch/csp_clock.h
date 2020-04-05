@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Clock interface.
 */
 
+#include <stdint.h>
 #include <csp/csp_platform.h>
 
 #ifdef __cplusplus
@@ -37,9 +38,9 @@ extern "C" {
    Timestamp (cross platform).
 */
 typedef struct {
-        //! Seconds
+	//! Seconds
 	uint32_t tv_sec;
-        //! Nano-seconds.
+	//! Nano-seconds.
 	uint32_t tv_nsec;
 } csp_timestamp_t;
 
@@ -67,4 +68,5 @@ int csp_clock_set_time(const csp_timestamp_t * time);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_ARCH_CLOCK_H_

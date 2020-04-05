@@ -18,8 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef CSP_INTERFACES_CSP_IF_CAN_H
-#define CSP_INTERFACES_CSP_IF_CAN_H
+#ifndef _CSP_INTERFACES_CSP_IF_CAN_H
+#define _CSP_INTERFACES_CSP_IF_CAN_H
 
 /**
    @file
@@ -31,10 +31,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    The CAN Fragmentation Protocol (CFP) is based on CAN2.0B, using all 29 bits of the
    identifier. The CAN identifier is divided into these fields:
 
-   - Source:       5 bits
+   - Source:	   5 bits
    - Destination:  5 bits
-   - Type:         1 bit
-   - Remain:       8 bits
+   - Type:		   1 bit
+   - Remain:	   8 bits
    - Identifier:   10 bits
 
    The \b Source and \b Destination fields must match the source and destiantion addressses in the CSP packet.
@@ -47,6 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Other CAN communication using a standard 11 bit identifier, can co-exist on the wire.
 */
 
+#include <stdint.h>
 #include <csp/csp_interface.h>
 
 #ifdef __cplusplus
@@ -64,7 +65,7 @@ extern "C" {
 /** Remaining fragments */
 #define CFP_REMAIN_SIZE		8
 /** CFP identification. */
-#define CFP_ID_SIZE		10
+#define CFP_ID_SIZE			10
 /** @} */
 
 /**
@@ -72,15 +73,17 @@ extern "C" {
    @{
 */
 /** Helper macro */
-#define CFP_FIELD(id,rsiz,fsiz) ((uint32_t)((uint32_t)((id) >> (rsiz)) & (uint32_t)((1 << (fsiz)) - 1)))
+#define CFP_FIELD(id,rsiz,fsiz) \
+	((uint32_t)((uint32_t)((id) >> (rsiz)) & (uint32_t)((1 << (fsiz)) - 1)))
+
 /** Extract source address */
 #define CFP_SRC(id)		CFP_FIELD(id, CFP_HOST_SIZE + CFP_TYPE_SIZE + CFP_REMAIN_SIZE + CFP_ID_SIZE, CFP_HOST_SIZE)
 /** Extract destination address */
 #define CFP_DST(id)		CFP_FIELD(id, CFP_TYPE_SIZE + CFP_REMAIN_SIZE + CFP_ID_SIZE, CFP_HOST_SIZE)
 /** Extract type (begin or more) */
-#define CFP_TYPE(id)		CFP_FIELD(id, CFP_REMAIN_SIZE + CFP_ID_SIZE, CFP_TYPE_SIZE)
+#define CFP_TYPE(id)	CFP_FIELD(id, CFP_REMAIN_SIZE + CFP_ID_SIZE, CFP_TYPE_SIZE)
 /** Extract remaining fragments */
-#define CFP_REMAIN(id)		CFP_FIELD(id, CFP_ID_SIZE, CFP_REMAIN_SIZE)
+#define CFP_REMAIN(id)	CFP_FIELD(id, CFP_ID_SIZE, CFP_REMAIN_SIZE)
 /** Extract CFP identification */
 #define CFP_ID(id)		CFP_FIELD(id, 0, CFP_ID_SIZE)
 /** @} */
@@ -90,7 +93,9 @@ extern "C" {
    @{
 */
 /** Helper macro */
-#define CFP_MAKE_FIELD(id,fsiz,rsiz) ((uint32_t)(((id) & (uint32_t)((uint32_t)(1 << (fsiz)) - 1)) << (rsiz)))
+#define CFP_MAKE_FIELD(id,fsiz,rsiz) \
+	((uint32_t)(((id) & (uint32_t)((uint32_t)(1 << (fsiz)) - 1)) << (rsiz)))
+
 /** Make source */
 #define CFP_MAKE_SRC(id)	CFP_MAKE_FIELD(id, CFP_HOST_SIZE, CFP_HOST_SIZE + CFP_TYPE_SIZE + CFP_REMAIN_SIZE + CFP_ID_SIZE)
 /** Make destination */
@@ -104,9 +109,10 @@ extern "C" {
 /** @} */
 
 /** Mask to uniquely separate connections */
-#define CFP_ID_CONN_MASK	(CFP_MAKE_SRC((uint32_t)(1 << CFP_HOST_SIZE) - 1) | \
-				 CFP_MAKE_DST((uint32_t)(1 << CFP_HOST_SIZE) - 1) | \
-				 CFP_MAKE_ID((uint32_t)(1 << CFP_ID_SIZE) - 1))
+#define CFP_ID_CONN_MASK								\
+	(CFP_MAKE_SRC((uint32_t)(1 << CFP_HOST_SIZE) - 1) |	\
+	 CFP_MAKE_DST((uint32_t)(1 << CFP_HOST_SIZE) - 1) |	\
+	 CFP_MAKE_ID((uint32_t)(1 << CFP_ID_SIZE) - 1))
 
 /**
    Default interface name.
@@ -130,10 +136,10 @@ typedef int (*csp_can_driver_tx_f)(void * driver_data, uint32_t id, const uint8_
    Interface data (state information).
 */
 typedef struct {
-    /** CFP Identification number - same number on all fragments from same CSP packet. */
-    uint32_t cfp_frame_id;
-    /** Tx function */
-    csp_can_driver_tx_f tx_func;
+	/** CFP Identification number - same number on all fragments from same CSP packet. */
+	uint32_t cfp_frame_id;
+	/** Tx function */
+	csp_can_driver_tx_f tx_func;
 } csp_can_interface_data_t;
 
 /**
@@ -175,4 +181,5 @@ int csp_can_rx(csp_iface_t * iface, uint32_t id, const uint8_t * data, uint8_t d
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_INTERFACES_CSP_IF_CAN_H

@@ -18,8 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef CSP_RTABLE_H_
-#define CSP_RTABLE_H_
+#ifndef _CSP_RTABLE_H_
+#define _CSP_RTABLE_H_
 
 /**
    @file
@@ -31,6 +31,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Normal routing: If the route's via address is set to #CSP_NO_VIA_ADDRESS, the packet will be sent directly to the destination address
    specified in the CSP header, otherwise the packet will be sent the to the route's via address.
 */
+
+#include <stdint.h>
+#include <sys/types.h>
 
 #include <csp/csp_iflist.h>
 
@@ -47,16 +50,16 @@ extern "C" {
    Legacy definition for #CSP_NO_VIA_ADDRESS.
 */
 #define CSP_NODE_MAC	CSP_NO_VIA_ADDRESS
-    
+
 /**
    Route entry.
    @see csp_rtable_find_route().
 */
 struct csp_route_s {
-    /** Which interface to route packet on */
-    csp_iface_t * iface;
-    /** If different from #CSP_NO_VIA_ADDRESS, send packet to this address, instead of the destination address in the CSP header. */
-    uint8_t via;
+	/** Which interface to route packet on */
+	csp_iface_t * iface;
+	/** If different from #CSP_NO_VIA_ADDRESS, send packet to this address, instead of the destination address in the CSP header. */
+	uint8_t via;
 };
 
 /**
@@ -147,7 +150,7 @@ void csp_rtable_iterate(csp_rtable_iterator_t iter, void * ctx);
    @return #CSP_ERR_NONE on success, or an error code.
 */
 static inline int csp_route_set(uint8_t dest_address, csp_iface_t *ifc, uint8_t via) {
-    return csp_rtable_set(dest_address, CSP_ID_HOST_SIZE, ifc, via);
+	return csp_rtable_set(dest_address, CSP_ID_HOST_SIZE, ifc, via);
 }
 
 /**
@@ -155,7 +158,7 @@ static inline int csp_route_set(uint8_t dest_address, csp_iface_t *ifc, uint8_t 
    @deprecated Use csp_rtable_print() instead.
 */
 static inline void csp_route_print_table() {
-    csp_rtable_print();
+	csp_rtable_print();
 }
 
 /**
@@ -163,10 +166,11 @@ static inline void csp_route_print_table() {
    @deprecated Use csp_iflist_print() instead.
 */
 static inline void csp_route_print_interfaces(void) {
-    csp_iflist_print();
+	csp_iflist_print();
 }
 
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_RTABLE_H_

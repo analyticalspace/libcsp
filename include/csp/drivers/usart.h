@@ -18,8 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef CSP_DRIVERS_USART_H
-#define CSP_DRIVERS_USART_H
+#ifndef _CSP_DRIVERS_USART_H
+#define _CSP_DRIVERS_USART_H
 
 /**
    @file
@@ -28,6 +28,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
    @note This interface implementation only support ONE open UART connection.
 */
+#include <stdint.h>
+#include <sys/types.h>
 
 #include <csp/interfaces/csp_if_kiss.h>
 
@@ -43,9 +45,9 @@ extern "C" {
    OS file handle.
 */
 #if (CSP_WINDOWS)
-    typedef HANDLE csp_usart_fd_t;
+typedef HANDLE csp_usart_fd_t;
 #else
-    typedef int csp_usart_fd_t;
+typedef int csp_usart_fd_t;
 #endif
 
 /**
@@ -53,18 +55,18 @@ extern "C" {
    @see csp_usart_open()
 */
 typedef struct csp_usart_conf {
-    //! USART device.
-    const char *device;
-    //! bits per second.
-    uint32_t baudrate;
-    //! Number of data bits.
-    uint8_t databits;
-    //! Number of stop bits.
-    uint8_t stopbits;
-    //! Parity setting.
-    uint8_t paritysetting;
-    //! Enable parity checking (Windows only).
-    uint8_t checkparity;
+	//! USART device.
+	const char *device;
+	//! bits per second.
+	uint32_t baudrate;
+	//! Number of data bits.
+	uint8_t databits;
+	//! Number of stop bits.
+	uint8_t stopbits;
+	//! Parity setting.
+	uint8_t paritysetting;
+	//! Enable parity checking (Windows only).
+	uint8_t checkparity;
 } csp_usart_conf_t;
 
 /**
@@ -118,4 +120,5 @@ int csp_usart_open_and_add_kiss_interface(const csp_usart_conf_t *conf, const ch
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_DRIVERS_USART_H

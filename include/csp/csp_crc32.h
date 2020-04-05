@@ -25,6 +25,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    @file
    CRC32 support.
 */
+#include <stdint.h>
+#include <stdbool.h>
 
 #include <csp/csp.h>
 
@@ -59,4 +61,5 @@ uint32_t csp_crc32_memory(const uint8_t * addr, uint32_t length);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_CRC32_H_

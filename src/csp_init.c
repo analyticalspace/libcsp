@@ -18,18 +18,20 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "csp_init.h"
+#include <stdint.h>
+#include <string.h>
 
-#include <csp/interfaces/csp_if_lo.h>
-#include <csp/arch/csp_time.h>
+#include "csp_init.h"
 #include "csp_conn.h"
 #include "csp_qfifo.h"
 #include "csp_port.h"
 
+#include <csp/interfaces/csp_if_lo.h>
+#include <csp/arch/csp_time.h>
+
 csp_conf_t csp_conf;
 
 uint8_t csp_get_address(void) {
-
 	return csp_conf.address;
 }
 
@@ -74,7 +76,6 @@ int csp_init(const csp_conf_t * conf) {
 	csp_route_set(CSP_DEFAULT_ROUTE, &csp_if_lo, CSP_NO_VIA_ADDRESS);
 
 	return CSP_ERR_NONE;
-
 }
 
 void csp_free_resources(void) {
@@ -85,11 +86,8 @@ void csp_free_resources(void) {
 	csp_conn_free_resources();
 	csp_buffer_free_resources();
 	memset(&csp_conf, 0, sizeof(csp_conf));
-
 }
 
 const csp_conf_t * csp_get_conf(void) {
-
 	return &csp_conf;
-
 }

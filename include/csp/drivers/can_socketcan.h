@@ -17,14 +17,15 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#ifndef LIB_CSP_INCLUDE_CSP_DRIVERS_CAN_SOCKETCAN_H_
-#define LIB_CSP_INCLUDE_CSP_DRIVERS_CAN_SOCKETCAN_H_
+#ifndef _CSP_DRIVERS_CAN_SOCKETCAN_H_
+#define _CSP_DRIVERS_CAN_SOCKETCAN_H_
 
 /**
    @file
 
    Socket CAN driver (Linux).
 */
+#include <stdbool.h>
 
 #include <csp/interfaces/csp_if_can.h>
 
@@ -42,7 +43,8 @@ extern "C" {
    @param[out] return_iface the added interface.
    @return The added interface, or NULL in case of failure.
 */
-int csp_can_socketcan_open_and_add_interface(const char * device, const char * ifname, int bitrate, bool promisc, csp_iface_t ** return_iface);
+int csp_can_socketcan_open_and_add_interface(const char * device, const char * ifname,
+											 int bitrate, bool promisc, csp_iface_t ** return_iface);
 
 /**
    Initialize socketcan and add CSP interface.
@@ -68,4 +70,5 @@ int csp_can_socketcan_stop(csp_iface_t * iface);
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_DRIVERS_CAN_SOCKETCAN_H_

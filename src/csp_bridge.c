@@ -19,10 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <csp/csp.h>
-
 #include <csp/csp_interface.h>
 #include <csp/interfaces/csp_if_zmqhub.h>
 #include <csp/arch/csp_thread.h>
+
 #include "csp_qfifo.h"
 #include "csp_io.h"
 #include "csp_promisc.h"
@@ -36,11 +36,11 @@ static bridge_interface_t bif_b;
 
 static CSP_DEFINE_TASK(csp_bridge) {
 
-	/* Here there be bridging */
-	while (1) {
-
+	while (1)
+    {
 		/* Get next packet to route */
 		csp_qfifo_t input;
+
 		if (csp_qfifo_read(&input) != CSP_ERR_NONE) {
 			continue;
 		}
@@ -58,6 +58,7 @@ static CSP_DEFINE_TASK(csp_bridge) {
 
 		/* Find the opposing interface */
 		csp_route_t route;
+
 		if (input.iface == bif_a.iface) {
 			route.iface = bif_b.iface;
 			route.via = CSP_NO_VIA_ADDRESS;
@@ -68,7 +69,7 @@ static CSP_DEFINE_TASK(csp_bridge) {
 
 		/* Send to the interface directly, no hassle */
 		if (csp_send_direct(packet->id, packet, &route, 0) != CSP_ERR_NONE) {
-			csp_log_warn("Router failed to send");
+			csp_log_warn("csp_bridge: Router failed to send");
 			csp_buffer_free(packet);
 		}
 	}
@@ -92,5 +93,5 @@ int csp_bridge_start(unsigned int task_stack_size, unsigned int task_priority, c
 	}
 
 	return CSP_ERR_NONE;
-
 }
+

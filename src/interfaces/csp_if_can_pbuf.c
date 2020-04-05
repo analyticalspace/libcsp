@@ -18,6 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdint.h>
+
 #include "csp_if_can_pbuf.h"
 
 #include <csp/csp_buffer.h>
@@ -56,38 +58,40 @@ int csp_can_pbuf_free(csp_can_pbuf_element_t *buf, CSP_BASE_TYPE *task_woken)
 
 csp_can_pbuf_element_t *csp_can_pbuf_new(uint32_t id, CSP_BASE_TYPE *task_woken)
 {
+	int i;
 	uint32_t now = (task_woken) ? csp_get_ms_isr() : csp_get_ms();
 
-	for (int i = 0; i < PBUF_ELEMENTS; i++) {
-
+	for (i = 0; i < PBUF_ELEMENTS; i++) {
 		/* Perform cleanup in used pbufs */
 		if (csp_can_pbuf[i].state == BUF_USED) {
 			if (now - csp_can_pbuf[i].last_used > PBUF_TIMEOUT_MS)
 				csp_can_pbuf_free(&csp_can_pbuf[i], task_woken);
 		}
 
-		if (csp_can_pbuf[i].state == BUF_FREE) {
+		if (csp_can_pbuf[i].state == BUF_FREE)
+		{
 			csp_can_pbuf[i].state = BUF_USED;
 			csp_can_pbuf[i].cfpid = id;
 			csp_can_pbuf[i].remain = 0;
 			csp_can_pbuf[i].last_used = now;
 			return &csp_can_pbuf[i];
 		}
-
 	}
 
 	return NULL;
-
 }
 
 csp_can_pbuf_element_t *csp_can_pbuf_find(uint32_t id, uint32_t mask, CSP_BASE_TYPE *task_woken)
 {
-	for (int i = 0; i < PBUF_ELEMENTS; i++) {
+	int i;
+
+	for (i = 0; i < PBUF_ELEMENTS; i++) {
 		if ((csp_can_pbuf[i].state == BUF_USED) && ((csp_can_pbuf[i].cfpid & mask) == (id & mask))) {
 			csp_can_pbuf[i].last_used = (task_woken) ? csp_get_ms_isr() : csp_get_ms();
 			return &csp_can_pbuf[i];
 		}
 	}
+
 	return NULL;
 }
 

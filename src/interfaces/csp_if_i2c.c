@@ -18,10 +18,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/interfaces/csp_if_i2c.h>
-
 #include <csp/csp.h>
 #include <csp/csp_endian.h>
+#include <csp/interfaces/csp_if_i2c.h>
 
 // Ensure certain fields in the csp_i2c_frame_t matches the fields in the csp_packet_t
 CSP_STATIC_ASSERT(offsetof(csp_i2c_frame_t, len) == offsetof(csp_packet_t, length), len_field_misaligned);
@@ -49,7 +48,7 @@ int csp_i2c_tx(const csp_route_t * ifroute, csp_packet_t * packet) {
 	frame->retries = 0;
 
 	/* send frame */
-        csp_i2c_interface_data_t * ifdata = ifroute->iface->interface_data;
+	csp_i2c_interface_data_t * ifdata = ifroute->iface->interface_data;
 	return (ifdata->tx_func)(ifroute->iface->driver_data, frame);
 
 }
@@ -87,7 +86,6 @@ void csp_i2c_rx(csp_iface_t * iface, csp_i2c_frame_t * frame, void * pxTaskWoken
 
 	/* Receive the packet in CSP */
 	csp_qfifo_write(packet, iface, pxTaskWoken);
-
 }
 
 int csp_i2c_add_interface(csp_iface_t * iface) {
@@ -97,16 +95,18 @@ int csp_i2c_add_interface(csp_iface_t * iface) {
 	}
 
 	csp_i2c_interface_data_t * ifdata = iface->interface_data;
+
 	if (ifdata->tx_func == NULL) {
 		return CSP_ERR_INVAL;
 	}
 
-        const unsigned int max_data_size = csp_buffer_data_size();
-        if ((iface->mtu == 0) || (iface->mtu > max_data_size)) {
+	const unsigned int max_data_size = csp_buffer_data_size();
+
+	if ((iface->mtu == 0) || (iface->mtu > max_data_size)) {
 		iface->mtu = max_data_size;
 	}
 
-        iface->nexthop = csp_i2c_tx;
+	iface->nexthop = csp_i2c_tx;
 
 	return csp_iflist_add(iface);
 }

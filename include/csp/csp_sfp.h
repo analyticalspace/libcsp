@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -33,7 +33,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    SFP is usually sent over a RDP connection (which also adds a header),
 */
 
-#include <string.h> // memcpy()
+#include <stdint.h>
+#include <string.h>
 
 #include <csp/csp_types.h>
 
@@ -75,7 +76,7 @@ int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, unsigned int d
 static inline int csp_sfp_send(csp_conn_t * conn, const void * data, unsigned int datasize, unsigned int mtu, uint32_t timeout) {
     return csp_sfp_send_own_memcpy(conn, data, datasize, mtu, timeout, (csp_memcpy_fnc_t) &memcpy);
 }
-    
+
 /**
    Receive data over a CSP connection.
 
@@ -108,4 +109,5 @@ static inline int csp_sfp_recv(csp_conn_t * conn, void ** dataout, int * datasiz
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif // _CSP_SFP_H_
