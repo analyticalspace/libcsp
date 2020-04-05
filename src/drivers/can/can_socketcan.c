@@ -18,6 +18,10 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#ifndef __linux__
+#	error "Linux Specific. Please implement board-specific CAN support in another file"
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +49,7 @@ typedef struct {
 	char name[CSP_IFLIST_NAME_MAX + 1];
 	csp_iface_t iface;
 	csp_can_interface_data_t ifdata;
-	pthread_t rx_thread;
+	csp_thread_handle_t rx_thread;
 	int socket;
 } can_context_t;
 
@@ -60,14 +64,20 @@ static void socketcan_free(can_context_t * ctx) {
 	}
 }
 
-static void * socketcan_rx_thread(void * arg)
+static CSP_DEFINE_TASK(socketcan_rx_thread)
 {
-	can_context_t * ctx = arg;
+	can_context_t * ctx = param;
+
+	/* detach this since there is no driver destructor.
+	 * We can use this directly as this file is linux specific. */
+	pthread_detach(pthread_self());
 
 	while (1) {
 		/* Read CAN frame */
 		struct can_frame frame;
+
 		int nbytes = read(ctx->socket, &frame, sizeof(frame));
+
 		if (nbytes < 0) {
 			csp_log_error("%s[%s]: read() failed, errno %d: %s", __FUNCTION__, ctx->name, errno, strerror(errno));
 			continue;
@@ -97,7 +107,7 @@ static void * socketcan_rx_thread(void * arg)
 	}
 
 	/* We should never reach this point */
-	pthread_exit(NULL);
+	return CSP_TASK_RETURN;
 }
 
 
@@ -141,6 +151,10 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	csp_log_info("INIT %s: device: [%s], bitrate: %d, promisc: %d",
 			ifname, device, bitrate, promisc);
 
+	struct ifreq ifr;
+	struct sockaddr_can addr;
+	memset(&addr, 0, sizeof(addr));
+
 #if (CSP_HAVE_LIBSOCKETCAN)
 	/* Set interface up - this may require increased OS privileges */
 	if (bitrate > 0) {
@@ -156,6 +170,7 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	if (ctx == NULL) {
 		return CSP_ERR_NOMEM;
 	}
+
 	ctx->socket = -1;
 
 	strncpy(ctx->name, ifname, sizeof(ctx->name) - 1);
@@ -172,8 +187,6 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	}
 
 	/* Locate interface */
-	struct ifreq ifr;
-
 	strncpy(ifr.ifr_name, device, IFNAMSIZ - 1);
 
 	if (ioctl(ctx->socket, SIOCGIFINDEX, &ifr) < 0) {
@@ -181,9 +194,6 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 		socketcan_free(ctx);
 		return CSP_ERR_INVAL;
 	}
-
-	struct sockaddr_can addr;
-	memset(&addr, 0, sizeof(addr));
 
 	/* Bind the socket to CAN interface */
 	addr.can_family = AF_CAN;
@@ -219,9 +229,11 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	}
 
 	/* Create receive thread */
-	if (pthread_create(&ctx->rx_thread, NULL, socketcan_rx_thread, ctx) != 0) {
-		csp_log_error("%s[%s]: pthread_create() failed, error: %s", __FUNCTION__, ctx->name, strerror(errno));
-		//socketcan_free(ctx); // we already added it to CSP (no way to remove it)
+	if (CSP_ERR_NONE !=
+		csp_thread_create(socketcan_rx_thread, ctx->name, 0, (void *)(ctx), 0, &ctx->rx_thread))
+	{
+		/* Using errno here as this file is linux specific */
+		csp_log_error("%s: csp_thread_create: %s", __func__, strerror(errno));
 		return CSP_ERR_NOMEM;
 	}
 
@@ -249,8 +261,6 @@ int csp_can_socketcan_stop(csp_iface_t *iface) {
 		csp_log_error("%s[%s]: pthread_cancel() failed, error: %s", __FUNCTION__, ctx->name, strerror(errno));
 		return CSP_ERR_DRIVER;
 	}
-
-	error = pthread_join(ctx->rx_thread, NULL);
 
 	if (error != 0) {
 		csp_log_error("%s[%s]: pthread_join() failed, error: %s", __FUNCTION__, ctx->name, strerror(errno));
