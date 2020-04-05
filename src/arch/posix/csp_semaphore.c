@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -17,6 +17,9 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
+
+#include <stdint.h>
+#include <semaphore.h>
 
 #include <csp/arch/csp_semaphore.h>
 #include <csp/csp_debug.h>
@@ -48,6 +51,7 @@ int csp_mutex_lock(csp_mutex_t * mutex, uint32_t timeout) {
 		ret = pthread_mutex_lock(mutex);
 	} else {
 		struct timespec ts;
+
 		if (clock_gettime(CLOCK_REALTIME, &ts)) {
 			return CSP_SEMAPHORE_ERROR;
 		}
@@ -73,6 +77,7 @@ int csp_mutex_lock(csp_mutex_t * mutex, uint32_t timeout) {
 }
 
 int csp_mutex_unlock(csp_mutex_t * mutex) {
+
 	if (pthread_mutex_unlock(mutex) == 0) {
 		return CSP_SEMAPHORE_OK;
 	}
@@ -81,7 +86,9 @@ int csp_mutex_unlock(csp_mutex_t * mutex) {
 }
 
 int csp_bin_sem_create(csp_bin_sem_handle_t * sem) {
+
 	csp_log_lock("Semaphore init: %p", sem);
+
 	if (sem_init(sem, 0, 1) == 0) {
 		return CSP_SEMAPHORE_OK;
 	}
@@ -90,6 +97,7 @@ int csp_bin_sem_create(csp_bin_sem_handle_t * sem) {
 }
 
 int csp_bin_sem_remove(csp_bin_sem_handle_t * sem) {
+
 	if (sem_destroy(sem) == 0) {
 		return CSP_SEMAPHORE_OK;
 	}
@@ -107,6 +115,7 @@ int csp_bin_sem_wait(csp_bin_sem_handle_t * sem, uint32_t timeout) {
 		ret = sem_wait(sem);
 	} else {
 		struct timespec ts;
+
 		if (clock_gettime(CLOCK_REALTIME, &ts)) {
 			return CSP_SEMAPHORE_ERROR;
 		}
@@ -132,17 +141,21 @@ int csp_bin_sem_wait(csp_bin_sem_handle_t * sem, uint32_t timeout) {
 }
 
 int csp_bin_sem_post_isr(csp_bin_sem_handle_t * sem, CSP_BASE_TYPE * task_woken) {
+
 	if (task_woken) {
 		*task_woken = 0;
 	}
+
 	return csp_bin_sem_post(sem);
 }
 
 int csp_bin_sem_post(csp_bin_sem_handle_t * sem) {
+
 	csp_log_lock("Post: %p", sem);
 
 	int value;
 	sem_getvalue(sem, &value);
+
 	if (value > 0) {
 		return CSP_SEMAPHORE_OK;
 	}

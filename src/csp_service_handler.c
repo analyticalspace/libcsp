@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -27,14 +27,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/csp_endian.h>
 #include <csp/csp_platform.h>
 #include <csp/csp_rtable.h>
+#include <csp/csp_services.h>
 #include <csp/arch/csp_time.h>
 #include <csp/arch/csp_clock.h>
 #include <csp/arch/csp_malloc.h>
 #include <csp/arch/csp_system.h>
 
 #include "csp_init.h"
-
-#define CSP_RPS_MTU	196
 
 /**
  * The CSP CMP mempy function is used to, override the function used to
@@ -243,28 +242,36 @@ void csp_service_handler(csp_conn_t * conn, csp_packet_t * packet) {
 			break;
 		}
 		/* Start by allocating just the right amount of memory */
-		int task_list_size = csp_sys_tasklist_size();
-		char * pslist = csp_malloc(task_list_size);
+		char * pslist = csp_malloc(CSP_RPS_MTU);
+
 		/* Check for malloc fail */
 		if (pslist == NULL) {
-			/* Send out the data */
-			strcpy((char *)packet->data, "Not enough memory");
+			/* Create error string */
+			strcpy((char *)packet->data, "Not enough memory\0");
 			packet->length = strlen((char *)packet->data);
 			/* Break and let the default handling send packet */
 			break;
 		}
 
 		/* Retrieve the tasklist */
-		csp_sys_tasklist(pslist);
-		int pslen = strnlen(pslist, task_list_size);
+		if (CSP_ERR_NONE != csp_sys_tasklist(pslist, CSP_RPS_MTU)) {
+			/* Create error string */
+			strcpy((char *)packet->data, "Failed to get task list\0");
+			packet->length = strlen((char *)packet->data);
+			/* Break and let the default handling send packet */
+			break;
+		}
+
+		int pslen = strlen(pslist);
 
 		/* Split the potentially very long string into packets */
 		int i = 0;
-		while(i < pslen) {
 
+		while(i < pslen) {
 			/* Allocate packet buffer, if need be */
 			if (packet == NULL)
 				packet = csp_buffer_get(CSP_RPS_MTU);
+
 			if (packet == NULL)
 				break;
 
@@ -273,13 +280,14 @@ void csp_service_handler(csp_conn_t * conn, csp_packet_t * packet) {
 
 			/* Send out the data */
 			memcpy(packet->data, &pslist[i], packet->length);
+
 			i += packet->length;
+
 			if (!csp_send(conn, packet, 0))
 				csp_buffer_free(packet);
 
 			/* Clear the packet reference when sent */
 			packet = NULL;
-
 		}
 		csp_free(pslist);
 		break;
@@ -307,7 +315,7 @@ void csp_service_handler(csp_conn_t * conn, csp_packet_t * packet) {
 		} else if (magic_word == CSP_REBOOT_SHUTDOWN_MAGIC) {
 			csp_sys_shutdown();
 		}
-		
+
 		csp_buffer_free(packet);
 		return;
 	}

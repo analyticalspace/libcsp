@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/csp.h>
 #include <csp/csp_cmp.h>
 #include <csp/csp_endian.h>
+#include <csp/csp_services.h>
 #include <csp/arch/csp_time.h>
 
 int csp_ping(uint8_t node, uint32_t timeout, unsigned int size, uint8_t conn_options) {
@@ -128,7 +129,7 @@ void csp_ps(uint8_t node, uint32_t timeout) {
 	}
 
 	/* Prepare data */
-	csp_packet_t * packet = csp_buffer_get(95);
+	csp_packet_t * packet = csp_buffer_get(CSP_RPS_MTU);
 
 	/* Check malloc */
 	if (packet == NULL) {
@@ -146,7 +147,6 @@ void csp_ps(uint8_t node, uint32_t timeout) {
 	}
 
 	while(1) {
-
 		/* Read incoming frame */
 		packet = csp_read(conn, timeout);
 		if (packet == NULL) {

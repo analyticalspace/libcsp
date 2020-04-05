@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -18,36 +18,99 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/arch/csp_thread.h>
+#if __linux__
+/* Set this so we can use non-portable stuff. I think
+ * this assumes glibc is present. TODO find a better way
+ * to detect if this is allowed. */
+#ifndef _GNU_SOURCE
+#	define _GNU_SOURCE
+#endif
+#endif
 
-#include <limits.h>
+#include <pthread.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #include <time.h>
 #include <errno.h>
 
-int csp_thread_create(csp_thread_func_t routine, const char * const thread_name, unsigned int stack_size, void * parameters, unsigned int priority, csp_thread_handle_t * return_handle) {
+#include <csp/arch/csp_thread.h>
+#include <csp/csp_debug.h>
 
-	pthread_attr_t attributes;
-	if (pthread_attr_init(&attributes) != 0) {
-		return CSP_ERR_NOMEM;
-	}
-	// if stack size is 0, use default stack size
-	if (stack_size) {
-		unsigned int min_stack_size = PTHREAD_STACK_MIN;// use at least one memory
-		while (min_stack_size < stack_size) { // must reach at least the provided size
-			min_stack_size += PTHREAD_STACK_MIN;// keep memory page boundary (some systems may fail otherwise))
-		}
-		pthread_attr_setstacksize(&attributes, min_stack_size);
-	}
-	pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_DETACHED);// no need to join with thread to free its resources
+/* We found that a PTHREAD_STACK_MIN would not allow printf or useful
+ * functions to execute safely, so we increase it. */
+#define NORMALIZED_PTHREAD_STACK_MIN (PTHREAD_STACK_MIN * 2)
 
+int csp_thread_create(csp_thread_func_t routine, const char * const thread_name,
+					  unsigned int stack_size, void * parameters,
+					  unsigned int priority, csp_thread_handle_t * return_handle) {
+
+	(void) priority;
+
+	int check;
 	pthread_t handle;
-	int return_code = pthread_create(&handle, &attributes, routine, parameters);
-	pthread_attr_destroy(&attributes);
+	pthread_attr_t attr;
+	size_t normalized_stack_depth;
 
-	if (return_code != 0) {
+	/* put stack_size into words. We do this to really
+	 * optimize for FreeRTOS usage, but also we just normalized
+	 * on stack words in libcsp entirely. */
+	stack_size *= sizeof(int);
+
+	/* if stack_size is 0, set to the platform/process default.
+	 * This uses getrlimit which should be available on all POSIX
+	 * platforms. */
+	if (stack_size == 0)
+	{
+		struct rlimit rl = {0};
+
+		if (0 != getrlimit(RLIMIT_STACK, &rl))
+		{
+			return CSP_ERR_INVAL;
+		}
+
+		normalized_stack_depth = rl.rlim_cur;
+
+		csp_log_warn("%s: '%s', defaulting stack_size to %u",
+					 __func__, thread_name, (unsigned int)normalized_stack_depth);
+	}
+	/* if stack_size is less than platform/process minimum,
+	 * normalize to that. */
+	else if (stack_size < NORMALIZED_PTHREAD_STACK_MIN)
+	{
+		normalized_stack_depth = NORMALIZED_PTHREAD_STACK_MIN;
+
+		csp_log_warn("%s: '%s', normalizing stack_size to %u",
+					 __func__, thread_name, (unsigned int)normalized_stack_depth);
+	}
+	else {
+		normalized_stack_depth = stack_size;
+	}
+
+	if (0 !=
+		(check = pthread_attr_init(&attr)))
+	{
+		return CSP_ERR_INVAL;
+	}
+
+	if (0 !=
+		(check = pthread_attr_setstacksize(&attr, normalized_stack_depth)))
+	{
+		return CSP_ERR_INVAL;
+	}
+
+	if (0 !=
+		(check = pthread_create(&handle, &attr, routine, parameters)))
+	{
 		return CSP_ERR_NOMEM;
 	}
+
+#ifdef __linux__
+	if (0 !=
+		(check = pthread_setname_np(handle, thread_name))) {
+		return CSP_ERR_INVAL;
+	}
+#endif
+
 	if (return_handle) {
 		*return_handle = handle;
 	}
@@ -56,7 +119,6 @@ int csp_thread_create(csp_thread_func_t routine, const char * const thread_name,
 }
 
 void csp_thread_exit(void) {
-
 	pthread_exit(CSP_TASK_RETURN);
 }
 

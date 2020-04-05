@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
    System interface.
 */
+
+#include <stdint.h>
+#include <sys/types.h>
 
 #include <csp/csp_platform.h>
 
@@ -62,17 +65,12 @@ typedef enum {
 
 /**
    Get task list.
-   Write task list into a pre-allocate buffer. The buffer must be at least the size returned by csp_sys_tasklist_size().
+   Write task list into a pre-allocate buffer.
    @param[out] out pre-allocate buffer for returning task.
+   @param out_size size in bytes of the output buffer
    @return #CSP_ERR_NONE on success.
 */
-int csp_sys_tasklist(char * out);
-
-/**
-   Get size of task buffer.
-   @return Size of task list buffer to allocate for the csp_sys_tasklist().
-*/
-int csp_sys_tasklist_size(void);
+int csp_sys_tasklist(char * out, size_t out_size);
 
 /**
    Free system memory.

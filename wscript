@@ -109,6 +109,8 @@ def configure(ctx):
     # Platform/OS specifics
     if ctx.options.with_os == 'posix':
         ctx.env.append_unique('LIBS', ['rt', 'pthread', 'util'])
+        ctx.check_cfg(package='libprocps', args='--cflags --libs', define_name='CSP_HAVE_LIBPROCPS')
+        ctx.env.append_unique('LIBS', ctx.env.LIB_LIBPROCPS)
     elif ctx.options.with_os == 'macosx':
         ctx.env.append_unique('LIBS', ['pthread'])
     elif ctx.options.with_os == 'windows':

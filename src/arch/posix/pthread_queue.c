@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -23,12 +23,12 @@ Inspired by c-pthread-queue by Matthew Dickinson
 http://code.google.com/p/c-pthread-queue/
 */
 
-#include <csp/arch/posix/pthread_queue.h>
-
+#include <stdint.h>
 #include <errno.h>
 #include <string.h>
 
 #include <csp/arch/csp_malloc.h>
+#include <csp/arch/posix/pthread_queue.h>
 
 static inline int get_deadline(struct timespec *ts, uint32_t timeout_ms)
 {
@@ -52,8 +52,7 @@ static inline int get_deadline(struct timespec *ts, uint32_t timeout_ms)
 	return ret;
 }
 
-static inline int init_cond_clock_monotonic(pthread_cond_t * cond)
-{
+static inline int init_cond_clock_monotonic(pthread_cond_t * cond) {
 
 	int ret;
 	pthread_condattr_t attr;
@@ -67,22 +66,27 @@ static inline int init_cond_clock_monotonic(pthread_cond_t * cond)
 
 	pthread_condattr_destroy(&attr);
 	return ret;
-
 }
 
 pthread_queue_t * pthread_queue_create(int length, size_t item_size) {
-	
+
 	pthread_queue_t * q = csp_malloc(sizeof(pthread_queue_t));
-	
-	if (q != NULL) {
+
+	if (q != NULL)
+	{
 		q->buffer = csp_malloc(length*item_size);
+
 		if (q->buffer != NULL) {
 			q->size = length;
 			q->item_size = item_size;
 			q->items = 0;
 			q->in = 0;
 			q->out = 0;
-			if (pthread_mutex_init(&(q->mutex), NULL) || init_cond_clock_monotonic(&(q->cond_full)) || init_cond_clock_monotonic(&(q->cond_empty))) {
+
+			if (pthread_mutex_init(&(q->mutex), NULL) ||
+				init_cond_clock_monotonic(&(q->cond_full)) ||
+				init_cond_clock_monotonic(&(q->cond_empty)))
+			{
 				csp_free(q->buffer);
 				csp_free(q);
 				q = NULL;
@@ -94,7 +98,6 @@ pthread_queue_t * pthread_queue_create(int length, size_t item_size) {
 	}
 
 	return q;
-	
 }
 
 void pthread_queue_delete(pthread_queue_t * q) {
@@ -106,16 +109,13 @@ void pthread_queue_delete(pthread_queue_t * q) {
 	csp_free(q);
 
 	return;
-
 }
-	
 
 static inline int wait_slot_available(pthread_queue_t * queue, struct timespec *ts) {
 
 	int ret;
 
 	while (queue->items == queue->size) {
-
 		if (ts != NULL) {
 			ret = pthread_cond_timedwait(&(queue->cond_full), &(queue->mutex), ts);
 		} else {
@@ -128,7 +128,6 @@ static inline int wait_slot_available(pthread_queue_t * queue, struct timespec *
 	}
 
 	return PTHREAD_QUEUE_OK;
-
 }
 
 int pthread_queue_enqueue(pthread_queue_t * queue, const void * value, uint32_t timeout) {
@@ -151,6 +150,7 @@ int pthread_queue_enqueue(pthread_queue_t * queue, const void * value, uint32_t 
 	pthread_mutex_lock(&(queue->mutex));
 
 	ret = wait_slot_available(queue, pts);
+
 	if (ret == PTHREAD_QUEUE_OK) {
 		/* Copy object from input buffer */
 		memcpy(queue->buffer+(queue->in * queue->item_size), value, queue->item_size);
@@ -166,7 +166,6 @@ int pthread_queue_enqueue(pthread_queue_t * queue, const void * value, uint32_t 
 	}
 
 	return ret;
-
 }
 
 static inline int wait_item_available(pthread_queue_t * queue, struct timespec *ts) {
@@ -174,7 +173,6 @@ static inline int wait_item_available(pthread_queue_t * queue, struct timespec *
 	int ret;
 
 	while (queue->items == 0) {
-
 		if (ts != NULL) {
 			ret = pthread_cond_timedwait(&(queue->cond_empty), &(queue->mutex), ts);
 		} else {
@@ -187,7 +185,6 @@ static inline int wait_item_available(pthread_queue_t * queue, struct timespec *
 	}
 
 	return PTHREAD_QUEUE_OK;
-
 }
 
 int pthread_queue_dequeue(pthread_queue_t * queue, void * buf, uint32_t timeout) {
@@ -225,7 +222,6 @@ int pthread_queue_dequeue(pthread_queue_t * queue, void * buf, uint32_t timeout)
 	}
 
 	return ret;
-
 }
 
 int pthread_queue_items(pthread_queue_t * queue) {
@@ -233,7 +229,6 @@ int pthread_queue_items(pthread_queue_t * queue) {
 	pthread_mutex_lock(&(queue->mutex));
 	int items = queue->items;
 	pthread_mutex_unlock(&(queue->mutex));
-	
+
 	return items;
-	
 }

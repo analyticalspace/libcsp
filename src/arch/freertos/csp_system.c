@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/types.h>
 
 #include <FreeRTOS.h>
 #include <task.h> // FreeRTOS
@@ -27,18 +28,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/csp_debug.h>
 #include <csp/arch/csp_system.h>
 
-int csp_sys_tasklist(char * out) {
+int csp_sys_tasklist(char * out, size_t out_size) {
+
+    // Sadly, there is no way for vTaskList to know how much memory/bufferspace
+    // is available. FreeRTOS source hints at creating your own tasklist function
+    // out of other functions, creating bounds.
+    (void) out_size;
+
 #if (tskKERNEL_VERSION_MAJOR < 8)
 	vTaskList((signed portCHAR *) out);
 #else
 	vTaskList(out);
 #endif
 	return CSP_ERR_NONE;
-}
-
-int csp_sys_tasklist_size(void) {
-
-	return 40 * uxTaskGetNumberOfTasks();
 }
 
 uint32_t csp_sys_memfree(void) {
