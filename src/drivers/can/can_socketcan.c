@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/tyeps.h>
+#include <sys/types.h>
 
 #include <errno.h>
 #include <linux/can/raw.h>
@@ -32,13 +32,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <sys/socket.h>
 #include <unistd.h>
 
-#if (CSP_HAVE_LIBSOCKETCAN)
-#include <libsocketcan.h>
-#endif
-
 #include <csp/csp.h>
 #include <csp/arch/csp_thread.h>
 #include <csp/drivers/can_socketcan.h>
+
+#if (CSP_HAVE_LIBSOCKETCAN)
+#include <libsocketcan.h>
+#endif
 
 // CAN interface data, state, etc.
 typedef struct {
