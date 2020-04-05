@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -18,12 +18,14 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/arch/csp_system.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #include <FreeRTOS.h>
 #include <task.h> // FreeRTOS
 
 #include <csp/csp_debug.h>
+#include <csp/arch/csp_system.h>
 
 int csp_sys_tasklist(char * out) {
 #if (tskKERNEL_VERSION_MAJOR < 8)
@@ -40,9 +42,8 @@ int csp_sys_tasklist_size(void) {
 }
 
 uint32_t csp_sys_memfree(void) {
-
+    // TODO not portable with all freertos heap implementations
 	return (uint32_t) xPortGetFreeHeapSize();
-
 }
 
 void csp_sys_set_color(csp_color_t color) {
@@ -69,7 +70,7 @@ void csp_sys_set_color(csp_color_t color) {
 		default:
 			color_code = 0; break;
 	}
-	
+
 	switch (color & COLOR_MASK_MODIFIER) {
 		case COLOR_BOLD:
 			modifier_code = 1; break;
