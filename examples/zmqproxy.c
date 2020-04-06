@@ -20,96 +20,139 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <unistd.h>
 #include <stdlib.h>
-#include <zmq.h>
 #include <assert.h>
+#include <signal.h>
 #include <pthread.h>
+
+#include <zmq.h>
 
 #include <csp/csp.h>
 
+#define USAGE \
+	"Usage: %s [-d N] [-h]\n" \
+	"zmq_proxy(3) wrapper for libcsp with XPUB @ tcp://*:7000 and XSUB @ tcp://*:6000\n" \
+	"A capture thread is started at tcp://localhost:7000 to log traffic\n" \
+	"\nOptions:\n" \
+	"  -d : Debug level, range 0-6\n" \
+	"\n"
+
+static sig_atomic_t stop = 0;
+static int lingertime = 0;
+
 static void * task_capture(void *ctx) {
 
-    /* Subscriber (RX) */
-    void *subscriber = zmq_socket(ctx, ZMQ_SUB);
-    assert(zmq_connect(subscriber, "tcp://localhost:7000") == 0);
-    assert(zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, "", 0) == 0);
+	/* Subscriber (RX) */
+	void *subscriber = zmq_socket(ctx, ZMQ_SUB);
+	zmq_setsockopt(subscriber, ZMQ_LINGER, &lingertime, sizeof(lingertime));
+	assert(zmq_connect(subscriber, "tcp://localhost:7000") == 0);
+	assert(zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, "", 0) == 0);
 
-    /* Allocated 'raw' CSP packet */
-    csp_packet_t * packet = malloc(1024);
-    assert(packet != NULL);
+	/* Allocated 'raw' CSP packet */
+	csp_packet_t * packet = malloc(1024);
+	assert(packet != NULL);
 
-    while (1) {
-    	zmq_msg_t msg;
-        zmq_msg_init_size(&msg, 1024);
+	while (! stop) {
+		zmq_msg_t msg;
+		zmq_msg_init_size(&msg, 1024);
 
-        /* Receive data */
-        if (zmq_msg_recv(&msg, subscriber, 0) < 0) {
-            zmq_msg_close(&msg);
-            csp_log_error("ZMQ: %s\r\n", zmq_strerror(zmq_errno()));
-            continue;
-        }
+		/* Receive data */
+		if (zmq_msg_recv(&msg, subscriber, ZMQ_DONTWAIT) < 0) {
+			if (EAGAIN == zmq_errno()) {
+				zmq_msg_close(&msg);
+				usleep(100000);
+				continue;
+			}
+			else {
+				zmq_msg_close(&msg);
+				csp_log_error("ZMQ: %s\r\n", zmq_strerror(zmq_errno()));
+				continue;
+			}
+		}
 
-        int datalen = zmq_msg_size(&msg);
-        if (datalen < 5) {
-            csp_log_warn("ZMQ: Too short datalen: %u\r\n", datalen);
-            while(zmq_msg_recv(&msg, subscriber, ZMQ_NOBLOCK) > 0)
-                zmq_msg_close(&msg);
-            continue;
-        }
+		int datalen = zmq_msg_size(&msg);
+		if (datalen < 5) {
+			csp_log_warn("ZMQ: Too short datalen: %u\r\n", datalen);
+			while(zmq_msg_recv(&msg, subscriber, ZMQ_NOBLOCK) > 0)
+				zmq_msg_close(&msg);
+			continue;
+		}
 
-        /* Copy the data from zmq to csp */
-        char * satidptr = ((char *) &packet->id) - 1;
-        memcpy(satidptr, zmq_msg_data(&msg), datalen);
-        packet->length = datalen - sizeof(packet->id) - 1;
+		/* Copy the data from zmq to csp */
+		char * satidptr = ((char *) &packet->id) - 1;
+		memcpy(satidptr, zmq_msg_data(&msg), datalen);
+		packet->length = datalen - sizeof(packet->id) - 1;
 
-        csp_log_packet("Input: Src %u, Dst %u, Dport %u, Sport %u, Pri %u, Flags 0x%02X, Size %"PRIu16,
-                       packet->id.src, packet->id.dst, packet->id.dport,
-                       packet->id.sport, packet->id.pri, packet->id.flags, packet->length);
+		csp_log_packet("Input: Src %u, Dst %u, Dport %u, Sport %u, Pri %u, Flags 0x%02X, Size %"PRIu16,
+					   packet->id.src, packet->id.dst, packet->id.dport,
+					   packet->id.sport, packet->id.pri, packet->id.flags, packet->length);
 
-        zmq_msg_close(&msg);
-    }
+		zmq_msg_close(&msg);
+	}
+
+	zmq_disconnect(subscriber, "tcp://localhost:7000");
+	zmq_close(subscriber);
+	free(packet);
+
+	return NULL;
+}
+
+static void on_sig(int s) {
+
+	(void) s;
+	stop = 1;
 }
 
 int main(int argc, char ** argv) {
 
-    csp_debug_level_t debug_level = CSP_PACKET;
-    int opt;
-    while ((opt = getopt(argc, argv, "d:h")) != -1) {
-        switch (opt) {
-            case 'd':
-                debug_level = atoi(optarg);
-                break;
-            default:
-                printf("Usage:\n"
-                       " -d <debug-level> debug level, 0 - 6\n");
-                exit(1);
-                break;
-        }
-    }
+	csp_debug_level_t debug_level = CSP_PACKET;
+	int opt;
 
-    /* enable/disable debug levels */
-    for (csp_debug_level_t i = 0; i <= CSP_LOCK; ++i) {
-        csp_debug_set_level(i, (i <= debug_level) ? true : false);
-    }
+	while ((opt = getopt(argc, argv, "d:h")) != -1) {
+		switch (opt) {
+			case 'd':
+				debug_level = atoi(optarg);
+				break;
+			default:
+				fprintf(stderr, USAGE, argv[0]);
+				return EXIT_FAILURE;
+				break;
+		}
+	}
 
-    void * ctx = zmq_ctx_new();
-    assert(ctx);
+	/* enable/disable debug levels */
+	for (csp_debug_level_t i = 0; i <= CSP_LOCK; ++i) {
+		csp_debug_set_level(i, (i <= debug_level) ? true : false);
+	}
 
-    void *frontend = zmq_socket(ctx, ZMQ_XSUB);
-    assert(frontend);
-    assert(zmq_bind (frontend, "tcp://*:6000") == 0);
+	signal(SIGINT, on_sig);
 
-    void *backend = zmq_socket(ctx, ZMQ_XPUB);
-    assert(backend);
-    assert(zmq_bind(backend, "tcp://*:7000") == 0);
+	void * ctx = zmq_ctx_new();
+	assert(ctx);
 
-    pthread_t capworker;
-    pthread_create(&capworker, NULL, task_capture, ctx);
+	void *frontend = zmq_socket(ctx, ZMQ_XSUB);
+	assert(frontend);
+	zmq_setsockopt(frontend, ZMQ_LINGER, &lingertime, sizeof(lingertime));
+	assert(zmq_bind (frontend, "tcp://*:6000") == 0);
 
-    csp_log_info("Starting ZMQproxy");
-    zmq_proxy(frontend, backend, NULL);
+	void *backend = zmq_socket(ctx, ZMQ_XPUB);
+	assert(backend);
+	zmq_setsockopt(backend, ZMQ_LINGER, &lingertime, sizeof(lingertime));
+	assert(zmq_bind(backend, "tcp://*:7000") == 0);
 
-    csp_log_info("Closing ZMQproxy");
-    zmq_ctx_destroy(ctx);
+	pthread_t capworker;
+	pthread_create(&capworker, NULL, task_capture, ctx);
 
-    return 0;
+	csp_log_info("Starting ZMQproxy");
+	zmq_proxy(frontend, backend, NULL);
+
+	// wait for control-c
+	pthread_join(capworker, NULL);
+
+	csp_log_info("Closing ZMQproxy");
+
+	zmq_close(frontend);
+	zmq_close(backend);
+	zmq_ctx_destroy(ctx);
+
+	return EXIT_SUCCESS;
 }
