@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Message buffer.
 */
 
+#include <sys/types.h>
+
 #include <csp/csp_types.h>
 
 #ifdef __cplusplus
