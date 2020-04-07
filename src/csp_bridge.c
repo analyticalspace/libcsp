@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <csp/csp.h>
+#include <csp/csp_debug.h>
 #include <csp/csp_interface.h>
 #include <csp/interfaces/csp_if_zmqhub.h>
 #include <csp/arch/csp_thread.h>
@@ -36,8 +37,10 @@ static bridge_interface_t bif_b;
 
 static CSP_DEFINE_TASK(csp_bridge) {
 
+	(void) param;
+
 	while (1)
-    {
+	{
 		/* Get next packet to route */
 		csp_qfifo_t input;
 

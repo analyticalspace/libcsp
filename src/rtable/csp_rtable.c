@@ -19,7 +19,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
+#include <sys/types.h>
 
 #include "csp_rtable_internal.h"
 #include "../csp_init.h"
@@ -36,7 +38,7 @@ static int csp_rtable_parse(const char * rtable, int dry_run) {
 	const size_t str_len = strnlen(rtable, 100);
 	char rtable_copy[str_len + 1];
 	strncpy(rtable_copy, rtable, str_len);
-	rtable_copy[str_len] = 0;		 
+	rtable_copy[str_len] = 0;
 
 	/* Get first token */
 	char * saveptr;
@@ -169,8 +171,10 @@ void csp_rtable_clear(void) {
 
 #if (CSP_DEBUG)
 
-static bool csp_rtable_print_route(void * ctx, uint8_t address, uint8_t mask, const csp_route_t * route)
-{
+static bool csp_rtable_print_route(void * ctx, uint8_t address, uint8_t mask, const csp_route_t * route) {
+
+	(void) ctx;
+
 	if (route->via == CSP_NO_VIA_ADDRESS) {
 		printf("%u/%u %s\r\n", address, mask, route->iface->name);
 	} else {

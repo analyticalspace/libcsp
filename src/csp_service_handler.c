@@ -19,7 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <csp/csp.h>
@@ -169,6 +168,8 @@ static int do_cmp_clock(struct csp_cmp_message *cmp) {
 
 /* CSP Management Protocol handler */
 static int csp_cmp_handler(csp_conn_t * conn, csp_packet_t * packet) {
+
+	(void) conn;
 
 	int ret = CSP_ERR_INVAL;
 	struct csp_cmp_message * cmp = (struct csp_cmp_message *) packet->data;

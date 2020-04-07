@@ -168,6 +168,11 @@ csp_packet_t * csp_read(csp_conn_t * conn, uint32_t timeout) {
 
 int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_route_t * ifroute, uint32_t timeout) {
 
+	(void) timeout;
+	uint16_t bytes;
+	uint16_t mtu;
+	csp_iface_t * ifout;
+
 	if (packet == NULL) {
 		csp_log_error("csp_send_direct called with NULL packet");
 		goto err;
@@ -178,7 +183,7 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_route_t * i
 		goto err;
 	}
 
-	csp_iface_t * ifout = ifroute->iface;
+	ifout = ifroute->iface;
 
 	csp_log_packet("OUT: S %u, D %u, Dp %u, Sp %u, Pr %u, Fl 0x%02X, Sz %u VIA: %s (%u)",
 				idout.src, idout.dst, idout.dport, idout.sport, idout.pri, idout.flags, packet->length, ifout->name, (ifroute->via != CSP_NO_VIA_ADDRESS) ? ifroute->via : idout.dst);
@@ -242,8 +247,8 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_route_t * i
 	}
 
 	/* Store length before passing to interface */
-	uint16_t bytes = packet->length;
-	uint16_t mtu = ifout->mtu;
+	bytes = packet->length;
+	mtu = ifout->mtu;
 
 	if (mtu > 0 && bytes > mtu)
 		goto tx_err;

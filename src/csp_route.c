@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include <csp/csp.h>
@@ -44,8 +45,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  * @param packet pointer to packet
  * @return CSP_ERR_NONE is all options are supported, CSP_ERR_NOTSUP if not
  */
-static int csp_route_check_options(csp_iface_t *iface, csp_packet_t *packet)
-{
+static int csp_route_check_options(csp_iface_t *iface, csp_packet_t *packet) {
+
+	(void) iface;
+	(void) packet;
+
 #if (CSP_USE_XTEA == 0)
 	/* Drop XTEA packets */
 	if (packet->id.flags & CSP_FXTEA) {
@@ -72,6 +76,7 @@ static int csp_route_check_options(csp_iface_t *iface, csp_packet_t *packet)
 		return CSP_ERR_NOTSUP;
 	}
 #endif
+
 	return CSP_ERR_NONE;
 }
 
@@ -154,6 +159,8 @@ static int csp_route_security_check(uint32_t security_opts, csp_iface_t * iface,
 }
 
 int csp_route_work(uint32_t timeout) {
+
+	(void) timeout;
 
 	csp_qfifo_t input;
 	csp_packet_t * packet;
@@ -264,10 +271,10 @@ int csp_route_work(uint32_t timeout) {
 
 		/* New incoming connection accepted */
 		csp_id_t idout;
-		idout.pri   = packet->id.pri;
-		idout.src   = csp_conf.address;
+		idout.pri	= packet->id.pri;
+		idout.src	= csp_conf.address;
 
-		idout.dst   = packet->id.src;
+		idout.dst	= packet->id.src;
 		idout.dport = packet->id.sport;
 		idout.sport = packet->id.dport;
 		idout.flags = packet->id.flags;
@@ -312,6 +319,9 @@ int csp_route_work(uint32_t timeout) {
 }
 
 static CSP_DEFINE_TASK(csp_task_router) {
+
+	(void) param;
+
 	/* Here there be routing */
 	while (1) {
 		csp_route_work(FIFO_TIMEOUT);

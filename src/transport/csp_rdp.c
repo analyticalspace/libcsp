@@ -935,6 +935,7 @@ accepted_open:
 int csp_rdp_connect(csp_conn_t * conn) {
 
 	int retry = 1;
+	int result;
 
 	conn->rdp.window_size	  = csp_rdp_window_size;
 	conn->rdp.conn_timeout	  = csp_rdp_conn_timeout;
@@ -971,7 +972,7 @@ retry:
 
 	/* Wait for router task to release semaphore */
 	csp_log_protocol("RDP %p: AC: Waiting for SYN/ACK reply...", conn);
-	int result = csp_bin_sem_wait(&conn->rdp.tx_wait, conn->rdp.conn_timeout);
+	result = csp_bin_sem_wait(&conn->rdp.tx_wait, conn->rdp.conn_timeout);
 
 	if (result == CSP_SEMAPHORE_OK) {
 		if (conn->rdp.state == RDP_OPEN) {
