@@ -50,7 +50,6 @@ int csp_i2c_tx(const csp_route_t * ifroute, csp_packet_t * packet) {
 	/* send frame */
 	csp_i2c_interface_data_t * ifdata = ifroute->iface->interface_data;
 	return (ifdata->tx_func)(ifroute->iface->driver_data, frame);
-
 }
 
 /**

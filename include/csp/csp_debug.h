@@ -48,13 +48,13 @@ extern "C" {
    Debug levels.
 */
 typedef enum {
-	CSP_ERROR	= 0, //!< Error
-	CSP_WARN	= 1, //!< Warning
-	CSP_INFO	= 2, //!< Informational
-	CSP_BUFFER	= 3, //!< Buffer, e.g. csp_packet get/free
-	CSP_PACKET	= 4, //!< Packet routing
+	CSP_ERROR		= 0, //!< Error
+	CSP_WARN		= 1, //!< Warning
+	CSP_INFO		= 2, //!< Informational
+	CSP_BUFFER		= 3, //!< Buffer, e.g. csp_packet get/free
+	CSP_PACKET		= 4, //!< Packet routing
 	CSP_PROTOCOL	= 5, //!< Protocol, i.e. RDP
-	CSP_LOCK	= 6, //!< Locking, i.e. semaphore
+	CSP_LOCK		= 6, //!< Locking, i.e. semaphore
 } csp_debug_level_t;
 
 /**

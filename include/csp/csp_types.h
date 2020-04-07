@@ -213,7 +213,7 @@ typedef union {
 typedef struct {
 	/** Padding. These bytes are used by some interface or protocols to store local data. */
 	uint8_t padding[CSP_PADDING_BYTES];
-		/** Data length. Must be just before CSP ID. */
+	/** Data length. Must be just before CSP ID. */
 	uint16_t length;
 	/** CSP id. Must be just before data, as it allows the interface to id and data in a single operation. */
 	csp_id_t id;

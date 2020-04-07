@@ -31,7 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <linux/can/raw.h>
 #include <net/if.h>
 #include <pthread.h>
-#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -81,12 +80,14 @@ static CSP_DEFINE_TASK(socketcan_rx_thread)
 		int nbytes = read(ctx->socket, &frame, sizeof(frame));
 
 		if (nbytes < 0) {
-			csp_log_error("%s[%s]: read() failed, errno %d: %s", __FUNCTION__, ctx->name, errno, strerror(errno));
+			csp_log_error("%s[%s]: read() failed, errno %d: %s",
+						  __FUNCTION__, ctx->name, errno, strerror(errno));
 			continue;
 		}
 
 		if (nbytes != sizeof(frame)) {
-			csp_log_warn("%s[%s]: Read incomplete CAN frame, size: %d, expected: %u bytes", __FUNCTION__, ctx->name, nbytes, (unsigned int) sizeof(frame));
+			csp_log_warn("%s[%s]: Read incomplete CAN frame, size: %d, expected: %u bytes",
+						 __FUNCTION__, ctx->name, nbytes, (unsigned int) sizeof(frame));
 			continue;
 		}
 
@@ -132,7 +133,8 @@ static int csp_can_tx_frame(void * driver_data, uint32_t id, const uint8_t * dat
 	while (write(ctx->socket, &frame, sizeof(frame)) != sizeof(frame))
 	{
 		if ((errno != ENOBUFS) || (elapsed_ms >= 1000)) {
-			csp_log_warn("%s[%s]: write() failed, errno %d: %s", __FUNCTION__, ctx->name, errno, strerror(errno));
+			csp_log_warn("%s[%s]: write() failed, errno %d: %s",
+						 __FUNCTION__, ctx->name, errno, strerror(errno));
 			return CSP_ERR_TX;
 		}
 
@@ -183,7 +185,8 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 
 	/* Create socket */
 	if ((ctx->socket = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		csp_log_error("%s[%s]: socket() failed, error: %s", __FUNCTION__, ctx->name, strerror(errno));
+		csp_log_error("%s[%s]: socket() failed, error: %s",
+					  __FUNCTION__, ctx->name, strerror(errno));
 		socketcan_free(ctx);
 		return CSP_ERR_INVAL;
 	}
@@ -192,7 +195,8 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	strncpy(ifr.ifr_name, device, IFNAMSIZ - 1);
 
 	if (ioctl(ctx->socket, SIOCGIFINDEX, &ifr) < 0) {
-		csp_log_error("%s[%s]: device: [%s], ioctl() failed, error: %s", __FUNCTION__, ctx->name, device, strerror(errno));
+		csp_log_error("%s[%s]: device: [%s], ioctl() failed, error: %s",
+					  __FUNCTION__, ctx->name, device, strerror(errno));
 		socketcan_free(ctx);
 		return CSP_ERR_INVAL;
 	}
@@ -202,7 +206,8 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	addr.can_ifindex = ifr.ifr_ifindex;
 
 	if (bind(ctx->socket, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		csp_log_error("%s[%s]: bind() failed, error: %s", __FUNCTION__, ctx->name, strerror(errno));
+		csp_log_error("%s[%s]: bind() failed, error: %s",
+					  __FUNCTION__, ctx->name, strerror(errno));
 		socketcan_free(ctx);
 		return CSP_ERR_INVAL;
 	}
@@ -215,7 +220,8 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 		};
 
 		if (setsockopt(ctx->socket, SOL_CAN_RAW, CAN_RAW_FILTER, &filter, sizeof(filter)) < 0) {
-			csp_log_error("%s[%s]: setsockopt() failed, error: %s", __FUNCTION__, ctx->name, strerror(errno));
+			csp_log_error("%s[%s]: setsockopt() failed, error: %s",
+						  __FUNCTION__, ctx->name, strerror(errno));
 			socketcan_free(ctx);
 			return CSP_ERR_INVAL;
 		}
@@ -225,7 +231,8 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	int res = csp_can_add_interface(&ctx->iface);
 
 	if (res != CSP_ERR_NONE) {
-		csp_log_error("%s[%s]: csp_can_add_interface() failed, error: %d", __FUNCTION__, ctx->name, res);
+		csp_log_error("%s[%s]: csp_can_add_interface() failed, error: %d",
+					  __FUNCTION__, ctx->name, res);
 		socketcan_free(ctx);
 		return res;
 	}
@@ -249,7 +256,9 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 csp_iface_t * csp_can_socketcan_init(const char * device, int bitrate, bool promisc) {
 
 	csp_iface_t * return_iface;
-	int res = csp_can_socketcan_open_and_add_interface(device, CSP_IF_CAN_DEFAULT_NAME, bitrate, promisc, &return_iface);
+	int res =
+		csp_can_socketcan_open_and_add_interface(device, CSP_IF_CAN_DEFAULT_NAME,
+												 bitrate, promisc, &return_iface);
 	return (res == CSP_ERR_NONE) ? return_iface : NULL;
 }
 
@@ -260,12 +269,14 @@ int csp_can_socketcan_stop(csp_iface_t *iface) {
 	int error = pthread_cancel(ctx->rx_thread);
 
 	if (error != 0) {
-		csp_log_error("%s[%s]: pthread_cancel() failed, error: %s", __FUNCTION__, ctx->name, strerror(errno));
+		csp_log_error("%s[%s]: pthread_cancel() failed, error: %s",
+					  __FUNCTION__, ctx->name, strerror(errno));
 		return CSP_ERR_DRIVER;
 	}
 
 	if (error != 0) {
-		csp_log_error("%s[%s]: pthread_join() failed, error: %s", __FUNCTION__, ctx->name, strerror(errno));
+		csp_log_error("%s[%s]: pthread_join() failed, error: %s",
+					  __FUNCTION__, ctx->name, strerror(errno));
 		return CSP_ERR_DRIVER;
 	}
 
