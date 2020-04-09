@@ -18,12 +18,13 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <stdint.h>
 #include <string.h>
-
-#include <csp/interfaces/csp_if_kiss.h>
+#include <sys/types.h>
 
 #include <csp/csp_endian.h>
 #include <csp/csp_crc32.h>
+#include <csp/interfaces/csp_if_kiss.h>
 
 #define FEND		0xC0
 #define FESC		0xDB
