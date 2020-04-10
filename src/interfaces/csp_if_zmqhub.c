@@ -90,6 +90,7 @@ CSP_DEFINE_TASK(csp_zmqhub_rx) {
 
 	while(1) {
 		zmq_msg_t msg;
+		assert(zmq_msg_init_size(&msg, CSP_ZMQ_MTU + HEADER_SIZE) == 0);
 
 		// Receive data
 		if (zmq_msg_recv(&msg, drv->subscriber, 0) < 0) {
