@@ -93,7 +93,7 @@ int csp_sys_tasklist(char * out, size_t out_size)
 
 	/* insert top level process */
 	cpu_percent_calc(proc);
-	SAFE_SNPRINTF("%-10s %-8d %.2f%%", proc->cmd,
+	SAFE_SNPRINTF("%-16s %-8d %.2f%%", proc->cmd,
 				  self[0], proc->pcpu / 10.f);
 
 	while ((task = readtask(pt, proc, NULL)))
@@ -107,7 +107,7 @@ int csp_sys_tasklist(char * out, size_t out_size)
 		if (task->tid != proc->tid)
 		{
 			cpu_percent_calc(task);
-			SAFE_SNPRINTF("\r\n%-10s %-8d %.2f%%", task->cmd,
+			SAFE_SNPRINTF("\r\n%-16s %-8d %.2f%%", task->cmd,
 						  task->tid, task->pcpu / 10.f);
 		}
 
