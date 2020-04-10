@@ -97,8 +97,8 @@ void csp_iflist_print(void) {
 		csp_bytesize(rxbuf, sizeof(rxbuf), i->rxbytes);
 
 		printf("%-10s tx: %05"PRIu32" rx: %05"PRIu32" txe: %05"PRIu32" rxe: %05"PRIu32"\r\n"
-			"		   drop: %05"PRIu32" autherr: %05"PRIu32 " frame: %05"PRIu32"\r\n"
-			"		   txb: %"PRIu32" (%s) rxb: %"PRIu32" (%s) MTU: %u\r\n\r\n",
+			"           drop: %05"PRIu32" autherr: %05"PRIu32 " frame: %05"PRIu32"\r\n"
+			"           txb: %"PRIu32" (%s) rxb: %"PRIu32" (%s) MTU: %u\r\n\r\n",
 			i->name, i->tx, i->rx, i->tx_error, i->rx_error, i->drop,
 			i->autherr, i->frame, i->txbytes, txbuf, i->rxbytes, rxbuf, i->mtu);
 
