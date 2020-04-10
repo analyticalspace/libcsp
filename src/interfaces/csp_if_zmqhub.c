@@ -75,9 +75,9 @@ int csp_zmqhub_tx(const csp_route_t * route, csp_packet_t * packet) {
 		csp_log_error("ZMQ send error: %u %s\r\n", result, zmq_strerror(zmq_errno()));
 	}
 
-   csp_buffer_free(packet);
+	csp_buffer_free(packet);
 
-   return CSP_ERR_NONE;
+	return CSP_ERR_NONE;
 }
 
 CSP_DEFINE_TASK(csp_zmqhub_rx) {
@@ -132,7 +132,7 @@ CSP_DEFINE_TASK(csp_zmqhub_rx) {
 		zmq_msg_close(&msg);
 	}
 
-	return CSP_TASK_RETURN;
+	csp_thread_exit();
 }
 
 int csp_zmqhub_make_endpoint(const char * host, uint16_t port, char * buf, size_t buf_size) {

@@ -37,11 +37,6 @@ int csp_thread_create(csp_thread_func_t routine, const char * const thread_name,
 	return CSP_ERR_NONE;
 }
 
-void csp_thread_exit(void) {
-
-	pthread_exit(CSP_TASK_RETURN);
-}
-
 void csp_sleep_ms(unsigned int time_ms) {
 
 

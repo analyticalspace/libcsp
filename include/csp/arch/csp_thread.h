@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -63,9 +63,17 @@ typedef csp_thread_return_t (* csp_thread_func_t)(void * parameter);
 
 /**
    Return value for a thread function.
-   Can be used as argument for normal return, eg "return CSP_TASK_RETURN";
 */
 #define CSP_TASK_RETURN NULL
+
+/**
+   Exit current thread with default return value
+*/
+#define csp_thread_exit() \
+	do { \
+		pthread_exit(CSP_TASK_RETURN); \
+		return CSP_TASK_RETURN; \
+	} while (0)
 
 #endif // CSP_POSIX
 
@@ -80,8 +88,10 @@ typedef HANDLE csp_thread_handle_t;
 typedef unsigned int csp_thread_return_t;
 typedef csp_thread_return_t (* csp_thread_func_t)(void *) __attribute__((stdcall));
 
-#define CSP_DEFINE_TASK(task_name) csp_thread_return_t __attribute__((stdcall)) task_name(void * param) 
+#define CSP_DEFINE_TASK(task_name) csp_thread_return_t __attribute__((stdcall)) task_name(void * param)
 #define CSP_TASK_RETURN 0
+
+#define csp_thread_exit() return CSP_TASK_RETURN
 
 #endif // CSP_WINDOWS
 
@@ -92,6 +102,12 @@ typedef csp_thread_return_t (* csp_thread_func_t)(void *) __attribute__((stdcall
 
 #include <FreeRTOS.h>
 #include <task.h>
+
+#if INCLUDE_vTaskDelete
+#	define csp_thread_exit() vTaskDelete(NULL)
+#else
+#	define csp_thread_exit()
+#endif
 
 typedef xTaskHandle csp_thread_handle_t;
 typedef void csp_thread_return_t;
@@ -114,12 +130,6 @@ typedef csp_thread_return_t (* csp_thread_func_t)(void *);
    @return #CSP_ERR_NONE on success, otherwise an error code.
 */
 int csp_thread_create(csp_thread_func_t func, const char * const name, unsigned int stack_size, void * parameter, unsigned int priority, csp_thread_handle_t * handle);
-
-/**
-   Exit current thread.
-   @note Not supported on all platforms.
-*/
-void csp_thread_exit(void);
 
 /**
    Sleep X mS.

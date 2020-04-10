@@ -58,7 +58,7 @@ static CSP_DEFINE_TASK(usart_rx_thread) {
 		ctx->rx_callback(ctx->user_data, cbuf, length, NULL);
 	}
 
-	return CSP_TASK_RETURN;
+	csp_thread_exit();
 }
 
 #if 0 // Unused function and no prototype in public heaaders

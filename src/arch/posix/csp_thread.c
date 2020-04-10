@@ -27,11 +27,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #endif
 
+#include <errno.h>
 #include <pthread.h>
 #include <sys/resource.h>
-#include <unistd.h>
 #include <time.h>
-#include <errno.h>
+#include <unistd.h>
 
 #include <csp/arch/csp_thread.h>
 #include <csp/csp_debug.h>
@@ -107,19 +107,19 @@ int csp_thread_create(csp_thread_func_t routine, const char * const thread_name,
 #ifdef __linux__
 	if (0 !=
 		(check = pthread_setname_np(handle, thread_name))) {
+		// TODO kill the thread if this fails
 		return CSP_ERR_INVAL;
 	}
 #endif
+
+	/* detach since csp doesnt support thread join */
+	pthread_detach(pthread_self());
 
 	if (return_handle) {
 		*return_handle = handle;
 	}
 
 	return CSP_ERR_NONE;
-}
-
-void csp_thread_exit(void) {
-	pthread_exit(CSP_TASK_RETURN);
 }
 
 void csp_sleep_ms(unsigned int time_ms) {

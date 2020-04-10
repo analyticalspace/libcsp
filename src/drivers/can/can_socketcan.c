@@ -69,10 +69,6 @@ static CSP_DEFINE_TASK(socketcan_rx_thread)
 {
 	can_context_t * ctx = param;
 
-	/* detach this since there is no driver destructor.
-	 * We can use this directly as this file is linux specific. */
-	pthread_detach(pthread_self());
-
 	while (1) {
 		/* Read CAN frame */
 		struct can_frame frame;
@@ -110,7 +106,7 @@ static CSP_DEFINE_TASK(socketcan_rx_thread)
 	}
 
 	/* We should never reach this point */
-	return CSP_TASK_RETURN;
+	csp_thread_exit();
 }
 
 
