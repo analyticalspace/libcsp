@@ -202,16 +202,22 @@ typedef union {
 */
 #define CSP_PADDING_BYTES	10
 
+//doc-begin:csp_packet_t
 /**
    CSP Packet.
 
-   This structure is constructed to fit with all interface and protocols to prevent the need to copy data.
+   This structure is constructed to fit with all interface and protocols to prevent the
+   need to copy data (zero copy).
 
-   @note In most cases a CSP packet cannot be reused in case of send failure, because the lower layers may add additional data causing
-   increased length (e.g. CRC32), convert the CSP id/ to different endian (e.g. I2C), etc.
+   @note In most cases a CSP packet cannot be reused in case of send failure, because the
+   lower layers may add additional data causing increased length (e.g. CRC32), convert
+   the CSP id to different endian (e.g. I2C), etc.
 */
 typedef struct {
-	/** Padding. These bytes are used by some interface or protocols to store local data. */
+	/**
+           Padding. These bytes are intended for use by protocols, which want to prepend
+           data before sending it, without having to copy/reorganize the entire message.
+        */
 	uint8_t padding[CSP_PADDING_BYTES];
 	/** Data length. Must be just before CSP ID. */
 	uint16_t length;
@@ -230,6 +236,7 @@ typedef struct {
 		uint32_t data32[0];
 	};
 } csp_packet_t;
+//doc-end:csp_packet_t
 
 /**
    Size of the packet overhead in #csp_packet_t.

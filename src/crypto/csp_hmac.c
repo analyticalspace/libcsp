@@ -34,8 +34,8 @@ static uint8_t csp_hmac_key[HMAC_KEY_LENGTH];
 
 /* HMAC state structure */
 typedef struct {
-	csp_sha1_state	md;
-	uint8_t		key[CSP_SHA1_BLOCKSIZE];
+	csp_sha1_state_t md;
+	uint8_t		 key[CSP_SHA1_BLOCKSIZE];
 } hmac_state;
 
 static int csp_hmac_init(hmac_state * hmac, const uint8_t * key, uint32_t keylen) {
