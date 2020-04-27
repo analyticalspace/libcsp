@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -21,42 +21,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_MALLOC_H_
 #define _CSP_MALLOC_H_
 
-/**
-   @file
-
-   Memory interface.
-*/
-
-#include <sys/types.h>
-#include <csp/csp_platform.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
-   Allocate chunk of memory (POSIX).
-   @param[in] size size of memory chunk (bytes).
-   @return Pointer to allocated memory, or NULL on failure.
-*/
+#include <stddef.h>
+
 void * csp_malloc(size_t size);
-
-/**
-   Allocate chunk of memory and set it to zero (POSIX).
-   @param[in] nmemb number of members/chunks to allocate.
-   @param[in] size size of memory chunk (bytes).
-   @return Pointer to allocated memory, or NULL on failure.
-*/
-void * csp_calloc(size_t nmemb, size_t size);
-
-/**
-   Free allocated memory (POSIX).
-   @param[in] ptr memory to free. NULL pointer is ignored.
-*/
 void csp_free(void * ptr);
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
 #endif // _CSP_MALLOC_H_

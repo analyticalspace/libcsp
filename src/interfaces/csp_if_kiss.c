@@ -20,231 +20,258 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <stdint.h>
 #include <string.h>
-#include <sys/types.h>
 
+#include <csp/csp.h>
 #include <csp/csp_endian.h>
-#include <csp/csp_crc32.h>
+#include <csp/csp_interface.h>
 #include <csp/interfaces/csp_if_kiss.h>
+#include <csp/csp_crc32.h>
 
-#define FEND		0xC0
-#define FESC		0xDB
-#define TFEND		0xDC
-#define TFESC		0xDD
-#define TNC_DATA	0x00
+#define CSP_KISS_MTU (256)
 
-int csp_kiss_tx(const csp_route_t * ifroute, csp_packet_t * packet) {
+#define FEND                (0xC0)
+#define FESC                (0xDB)
+#define TFEND               (0xDC)
+#define TFESC               (0xDD)
 
-	csp_kiss_interface_data_t * ifdata = ifroute->iface->interface_data;
-	void * driver = ifroute->iface->driver_data;
+#define TNC_DATA            (0x00)
+#define TNC_SET_HARDWARE    (0x06)
+#define TNC_RETURN          (0xFF)
 
-	/* Add CRC32 checksum - the MTU setting ensures there are space */
-	csp_crc32_append(packet, false);
+typedef enum {
+    KISS_MODE_NOT_STARTED,
+    KISS_MODE_STARTED,
+    KISS_MODE_ESCAPED,
+    KISS_MODE_SKIP_FRAME,
+} kiss_mode_e;
 
-	/* Lock */
-	if (csp_mutex_lock(&ifdata->lock, 1000) != CSP_MUTEX_OK) {
-		return CSP_ERR_TIMEDOUT;
-	}
+typedef struct csp_kiss_handle_s
+{
+    kiss_mode_e rx_mode;
+    unsigned int rx_length;
+    unsigned int rx_first;
+    volatile unsigned char *rx_cbuf;
+    csp_packet_t * rx_packet;
+} csp_kiss_handle_t;
 
-	/* Save the outgoing id in the buffer */
-	packet->id.ext = csp_hton32(packet->id.ext);
-	packet->length += sizeof(packet->id.ext);
+static const char * default_kiss_ifc_name = "KISS";
+static csp_iface_t csp_kiss_interfaces[CSP_KISS_MAX_INTERFACES];
+static csp_iface_t csp_kiss_handles[CSP_KISS_MAX_INTERFACES];
+size_t csp_kiss_interfaces_count = 0;
 
-	/* Transmit data */
-	const unsigned char start[] = {FEND, TNC_DATA};
-	const unsigned char esc_end[] = {FESC, TFEND};
-	const unsigned char esc_esc[] = {FESC, TFESC};
-	const unsigned char * data = (unsigned char *) &packet->id.ext;
-	ifdata->tx_func(driver, start, sizeof(start));
+static int csp_kiss_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t timeout)
+{
+    (void) timeout;
 
-	for (unsigned int i = 0; i < packet->length; i++, ++data)
-	{
-		if (*data == FEND) {
-			ifdata->tx_func(driver, esc_end, sizeof(esc_end));
-			continue;
-		}
+    csp_assert(interface);
 
-		if (*data == FESC) {
-			ifdata->tx_func(driver, esc_esc, sizeof(esc_esc));
-			continue;
-		}
+    /* Add CRC32 checksum */
+    csp_crc32_append(packet, false);
 
-		ifdata->tx_func(driver, data, 1);
-	}
+    /* Save the outgoing id in the buffer */
+    packet->id.ext = csp_hton32(packet->id.ext);
+    packet->length += sizeof(packet->id.ext);
 
-	const unsigned char stop[] = {FEND};
-	ifdata->tx_func(driver, stop, sizeof(stop));
+    /* Transmit data */
+    csp_uapi_kiss_putc(interface, FEND);
+    csp_uapi_kiss_putc(interface, TNC_DATA);
 
-	/* Free data */
-	csp_buffer_free(packet);
+    for (unsigned int i = 0; i < packet->length; i++)
+    {
+        if (((unsigned char *) &packet->id.ext)[i] == FEND)
+        {
+            ((unsigned char *) &packet->id.ext)[i] = TFEND;
+            csp_uapi_kiss_putc(interface, FESC);
+        }
+        else if (((unsigned char *) &packet->id.ext)[i] == FESC)
+        {
+            ((unsigned char *) &packet->id.ext)[i] = TFESC;
+            csp_uapi_kiss_putc(interface, FESC);
+        }
 
-	/* Unlock */
-	csp_mutex_unlock(&ifdata->lock);
+        csp_uapi_kiss_putc(interface,
+                           ((unsigned char *) &packet->id.ext)[i]);
+    }
 
-	return CSP_ERR_NONE;
+    csp_uapi_kiss_putc(interface, FEND);
+    csp_buffer_free(packet);
+
+    return CSP_ERR_NONE;
 }
 
-/**
- * Decode received data and eventually route the packet.
- */
-void csp_kiss_rx(csp_iface_t * iface, const uint8_t * buf, size_t len, void * pxTaskWoken) {
+int csp_kiss_rx(csp_iface_t * interface, uint8_t * buf, uint32_t len,
+                CSP_BASE_TYPE * task_woken)
+{
+    csp_kiss_handle_t * driver =
+        (csp_kiss_handle_t *) interface->driver;
 
-	csp_kiss_interface_data_t * ifdata = iface->interface_data;
+    while (len--)
+    {
+        /* Input */
+        unsigned char inputbyte = *buf++;
 
-	while (len--) {
+        /* If packet was too long */
+        if (driver->rx_length > (unsigned int)(interface->mtu + CSP_HEADER_LENGTH))
+        {
+            //csp_log_warn("KISS RX overflow");
+            interface->rx_error++;
+            driver->rx_mode = KISS_MODE_NOT_STARTED;
+            driver->rx_length = 0;
+        }
 
-		/* Input */
-		uint8_t inputbyte = *buf++;
+        switch (driver->rx_mode)
+        {
+        case KISS_MODE_NOT_STARTED:
+            {
+                /* Send normal chars back to driver for handling */
+                if (inputbyte != FEND) {
+                    csp_uapi_kiss_discard(interface, inputbyte, task_woken);
+                    break;
+                }
 
-		/* If packet was too long */
-		if (ifdata->rx_length > ifdata->max_rx_length) {
-			//csp_log_warn("KISS RX overflow");
-			iface->rx_error++;
-			ifdata->rx_mode = KISS_MODE_NOT_STARTED;
-			ifdata->rx_length = 0;
-		}
+                /* Try to allocate new buffer */
+                if (driver->rx_packet == NULL) {
+                    if (task_woken == NULL) {
+                        driver->rx_packet = csp_buffer_get(interface->mtu);
+                    } else {
+                        driver->rx_packet = csp_buffer_get_isr(interface->mtu);
+                    }
+                }
 
-		switch (ifdata->rx_mode)
-		{
-		case KISS_MODE_NOT_STARTED:
+                /* If no more memory, skip frame */
+                if (driver->rx_packet == NULL) {
+                    driver->rx_mode = KISS_MODE_SKIP_FRAME;
+                    break;
+                }
 
-			/* Skip any characters until End char detected */
-			if (inputbyte != FEND) {
-				break;
-			}
+                /* Start transfer */
+                driver->rx_length = 0;
+                driver->rx_mode = KISS_MODE_STARTED;
+                driver->rx_first = 1;
+            }
+            break;
+        case KISS_MODE_STARTED:
+            {
+                /* Escape char */
+                if (inputbyte == FESC)
+                {
+                    driver->rx_mode = KISS_MODE_ESCAPED;
+                    break;
+                }
 
-			/* Try to allocate new buffer */
-			if (ifdata->rx_packet == NULL) {
-				ifdata->rx_packet = pxTaskWoken ? csp_buffer_get_isr(0) : csp_buffer_get(0); // CSP only supports one size
-			}
+                /* End Char */
+                if (inputbyte == FEND)
+                {
+                    /* Accept message */
+                    if (driver->rx_length > 0)
+                    {
+                        /* Check for valid length */
+                        if (driver->rx_length < CSP_HEADER_LENGTH + sizeof(uint32_t)) {
+                            //csp_log_warn("KISS short frame skipped, len: %u", driver->rx_length);
+                            interface->rx_error++;
+                            driver->rx_mode = KISS_MODE_NOT_STARTED;
+                            break;
+                        }
 
-			/* If no more memory, skip frame */
-			if (ifdata->rx_packet == NULL) {
-				ifdata->rx_mode = KISS_MODE_SKIP_FRAME;
-				break;
-			}
+                        /* Count received frame */
+                        interface->frame++;
 
-			/* Start transfer */
-			ifdata->rx_length = 0;
-			ifdata->rx_mode = KISS_MODE_STARTED;
-			ifdata->rx_first = true;
-			break;
+                        /* The CSP packet length is without the header */
+                        driver->rx_packet->length = driver->rx_length - CSP_HEADER_LENGTH;
 
-		case KISS_MODE_STARTED:
+                        /* Convert the packet from network to host order */
+                        driver->rx_packet->id.ext = csp_ntoh32(driver->rx_packet->id.ext);
 
-			/* Escape char */
-			if (inputbyte == FESC) {
-				ifdata->rx_mode = KISS_MODE_ESCAPED;
-				break;
-			}
+                        /* Validate CRC */
+                        if (csp_crc32_verify(driver->rx_packet, false) != CSP_ERR_NONE) {
+                            //csp_log_warn("KISS invalid crc frame skipped, len: %u", driver->rx_packet->length);
+                            interface->rx_error++;
+                            driver->rx_mode = KISS_MODE_NOT_STARTED;
+                            break;
+                        }
 
-			/* End Char */
-			if (inputbyte == FEND) {
+                        /* Send back into CSP, notice calling from task so last argument must be NULL! */
+                        csp_qfifo_write(driver->rx_packet, interface, task_woken);
+                        driver->rx_packet = NULL;
+                        driver->rx_mode = KISS_MODE_NOT_STARTED;
+                        break;
+                    }
 
-				/* Accept message */
-				if (ifdata->rx_length > 0) {
+                    /* Break after the end char */
+                    break;
+                }
 
-					/* Check for valid length */
-					if (ifdata->rx_length < CSP_HEADER_LENGTH + sizeof(uint32_t)) {
-						//csp_log_warn("KISS short frame skipped, len: %u", ifdata->rx_length);
-						iface->rx_error++;
-						ifdata->rx_mode = KISS_MODE_NOT_STARTED;
-						break;
-					}
+                /* Skip the first char after FEND which is TNC_DATA (0x00) */
+                if (driver->rx_first) {
+                    driver->rx_first = 0;
+                    break;
+                }
 
-					/* Count received frame */
-					iface->frame++;
+                /* Valid data char */
+                ((char *) &driver->rx_packet->id.ext)[driver->rx_length++] = inputbyte;
+            }
+            break;
 
-					/* The CSP packet length is without the header */
-					ifdata->rx_packet->length = ifdata->rx_length - CSP_HEADER_LENGTH;
+        case KISS_MODE_ESCAPED:
+            {
+                /* Escaped escape char */
+                if (inputbyte == TFESC)
+                    ((char *) &driver->rx_packet->id.ext)[driver->rx_length++] = FESC;
 
-					/* Convert the packet from network to host order */
-					ifdata->rx_packet->id.ext = csp_ntoh32(ifdata->rx_packet->id.ext);
+                /* Escaped fend char */
+                if (inputbyte == TFEND)
+                    ((char *) &driver->rx_packet->id.ext)[driver->rx_length++] = FEND;
 
-					/* Validate CRC */
-					if (csp_crc32_verify(ifdata->rx_packet, false) != CSP_ERR_NONE) {
-						//csp_log_warn("KISS invalid crc frame skipped, len: %u", ifdata->rx_packet->length);
-						iface->rx_error++;
-						ifdata->rx_mode = KISS_MODE_NOT_STARTED;
-						break;
-					}
+                /* Go back to started mode */
+                driver->rx_mode = KISS_MODE_STARTED;
+            }
+            break;
+        case KISS_MODE_SKIP_FRAME:
+            {
+                /* Just wait for end char */
+                if (inputbyte == FEND)
+                    driver->rx_mode = KISS_MODE_NOT_STARTED;
+            }
+            break;
+        } /* switch */
+    } /* while (len--) */
 
-					/* Send back into CSP, notice calling from task so last argument must be NULL! */
-					csp_qfifo_write(ifdata->rx_packet, iface, pxTaskWoken);
-					ifdata->rx_packet = NULL;
-					ifdata->rx_mode = KISS_MODE_NOT_STARTED;
-					break;
-
-				}
-
-				/* Break after the end char */
-				break;
-			}
-
-			/* Skip the first char after FEND which is TNC_DATA (0x00) */
-			if (ifdata->rx_first) {
-				ifdata->rx_first = false;
-				break;
-			}
-
-			/* Valid data char */
-			((char *) &ifdata->rx_packet->id.ext)[ifdata->rx_length++] = inputbyte;
-
-			break;
-
-		case KISS_MODE_ESCAPED:
-
-			/* Escaped escape char */
-			if (inputbyte == TFESC)
-				((char *) &ifdata->rx_packet->id.ext)[ifdata->rx_length++] = FESC;
-
-			/* Escaped fend char */
-			if (inputbyte == TFEND)
-				((char *) &ifdata->rx_packet->id.ext)[ifdata->rx_length++] = FEND;
-
-			/* Go back to started mode */
-			ifdata->rx_mode = KISS_MODE_STARTED;
-			break;
-
-		case KISS_MODE_SKIP_FRAME:
-
-			/* Just wait for end char */
-			if (inputbyte == FEND)
-				ifdata->rx_mode = KISS_MODE_NOT_STARTED;
-
-			break;
-		}
-	}
+    return CSP_ERR_NONE;
 }
 
-int csp_kiss_add_interface(csp_iface_t * iface) {
+csp_iface_t * csp_kiss_init(csp_kiss_if_config_t * conf)
+{
+    csp_assert(conf);
 
-	if ((iface == NULL) || (iface->name == NULL) || (iface->interface_data == NULL)) {
-		return CSP_ERR_INVAL;
-	}
+    if (csp_kiss_interfaces_count >= (CSP_KISS_MAX_INTERFACES-1)) {
+        csp_log_error("Too many KISS interfaces created.");
+        return NULL;
+    }
 
-	csp_kiss_interface_data_t * ifdata = iface->interface_data;
+    if (strlen(conf->ifc) == 0) {
+        csp_log_warn("Setting KISS interface name to '%s'", default_kiss_ifc_name);
+        conf->ifc = default_kiss_ifc_name;
+    }
 
-	if (ifdata->tx_func == NULL) {
-		return CSP_ERR_INVAL;
-	}
+    if (csp_iflist_get_by_name(conf->ifc)) {
+        csp_log_error("KISS interface with name '%s' already exists", conf->ifc);
+        return NULL;
+    }
 
-	if (csp_mutex_create(&ifdata->lock) != CSP_MUTEX_OK) {
-		return CSP_ERR_NOMEM;
-	}
+    /* setup interface */
+    csp_iface_t * new_if = &csp_kiss_interfaces[csp_kiss_interfaces_count];
+    new_if->name = conf->ifc;
+    new_if->mtu = CSP_KISS_MTU;
+    new_if->nexthop = csp_kiss_tx;
 
-	ifdata->max_rx_length = CSP_HEADER_LENGTH + csp_buffer_data_size(); // CSP header + CSP data
-	ifdata->rx_length = 0;
-	ifdata->rx_mode = KISS_MODE_NOT_STARTED;
-	ifdata->rx_first = false;
-	ifdata->rx_packet = NULL;
+    /* setup handle */
+    new_if->driver = &csp_kiss_handles[csp_kiss_interfaces_count];
+    ((csp_kiss_handle_t *)(new_if->driver))->rx_packet = NULL;
+    ((csp_kiss_handle_t *)(new_if->driver))->rx_mode = KISS_MODE_NOT_STARTED;
 
-	const unsigned int max_data_size = csp_buffer_data_size() - sizeof(uint32_t); // compensate for the added CRC32
+    /* Regsiter interface */
+    csp_iflist_add(new_if);
+    csp_kiss_interfaces_count += 1;
 
-	if ((iface->mtu == 0) || (iface->mtu > max_data_size)) {
-		iface->mtu = max_data_size;
-	}
-
-	iface->nexthop = csp_kiss_tx;
-
-	return csp_iflist_add(iface);
+    return new_if;
 }

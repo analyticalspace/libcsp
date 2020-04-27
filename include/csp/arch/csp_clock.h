@@ -18,55 +18,28 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _CSP_ARCH_CLOCK_H_
-#define _CSP_ARCH_CLOCK_H_
-
-/**
-   @file
-
-   Clock interface.
-*/
-
-#include <stdint.h>
-#include <csp/csp_platform.h>
+#ifndef _CSP_CLOCK_H_
+#define _CSP_CLOCK_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
-   Timestamp (cross platform).
-*/
+#include <stdint.h>
+
+#include <csp/csp_compiler.h>
+
 typedef struct {
-	//! Seconds
 	uint32_t tv_sec;
-	//! Nano-seconds.
 	uint32_t tv_nsec;
 } csp_timestamp_t;
 
-/**
-   Get time.
-
-   This function is 'weak' in libcsp, providing a working implementation for following OS's: POSIX, Windows and Macosx.
-   This function is expected to be equivalent to standard POSIX clock_gettime(CLOCK_REALTIME, ...).
-
-   @param[out] time current time.
-*/
-void csp_clock_get_time(csp_timestamp_t * time);
-
-/**
-   Set time.
-
-   This function is 'weak' in libcsp, providing a working implementation for following OS's: POSIX, Windows and Macosx.
-   This function is expected to be equivalent to standard POSIX clock_settime(CLOCK_REALTIME, ...).
-
-   @param[in] time time to set.
-   @return #CSP_ERR_NONE on success.
-*/
-int csp_clock_set_time(const csp_timestamp_t * time);
+/* User functions required */
+CSP_COMPILER_WEAK extern void clock_get_time(csp_timestamp_t * time);
+CSP_COMPILER_WEAK extern void clock_set_time(csp_timestamp_t * time);
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
-#endif // _CSP_ARCH_CLOCK_H_
+#endif // _CSP_CLOCK_H_

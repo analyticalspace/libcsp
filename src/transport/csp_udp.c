@@ -18,31 +18,32 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "csp_transport.h"
-#include "../csp_conn.h"
-
 #include <csp/csp.h>
 #include <csp/arch/csp_queue.h>
+#include "../csp_port.h"
+#include "../csp_conn.h"
+#include "csp_transport.h"
 
-void csp_udp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
+void csp_udp_new_packet(csp_conn_t * conn, csp_packet_t * packet)
+{
+    /* Enqueue */
+    if (csp_conn_enqueue_packet(conn, packet) < 0) {
+        csp_log_error("Connection buffer queue full!");
+        csp_buffer_free(packet);
+        return;
+    }
 
-	/* Enqueue */
-	if (csp_conn_enqueue_packet(conn, packet) < 0) {
-		csp_log_error("Connection buffer queue full!");
-		csp_buffer_free(packet);
-		return;
-	}
+    /* Try to queue up the new connection pointer */
+    if (conn->socket != NULL)
+    {
+        if (csp_queue_enqueue(conn->socket, &conn, 0) != CSP_QUEUE_OK) {
+            csp_log_warn("Warning socket connection queue full");
+            csp_close(conn);
+            return;
+        }
 
-	/* Try to queue up the new connection pointer */
-	if (conn->socket != NULL) {
-		if (csp_queue_enqueue(conn->socket, &conn, 0) != CSP_QUEUE_OK) {
-			csp_log_warn("Warning socket connection queue full");
-			csp_close(conn);
-			return;
-		}
-
-		/* Ensure that this connection will not be posted to this socket again */
-		conn->socket = NULL;
-	}
+        /* Ensure that this connection will not be posted to this socket again */
+        conn->socket = NULL;
+    }
 }
 

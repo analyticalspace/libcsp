@@ -18,117 +18,128 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-
-#include <stdarg.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 
-#include <csp/csp.h>
-#include <csp/csp_debug.h>
-#include <csp/arch/csp_clock.h>
-#include <csp/arch/csp_system.h>
+#ifdef __AVR__
+#include <avr/pgmspace.h>
+#endif
 
-#if (CSP_DEBUG) && (CSP_USE_EXTERNAL_DEBUG == 0)
+/* CSP includes */
+#include <csp/csp.h>
+
+#include <csp/arch/csp_system.h>
 
 /* Custom debug function */
 csp_debug_hook_func_t csp_debug_hook_func = NULL;
 
 /* Debug levels */
-bool csp_debug_level_enabled[] = {
-	[CSP_ERROR]		= true,
-	[CSP_WARN]		= true,
-	[CSP_INFO]		= false,
-	[CSP_BUFFER]	= false,
-	[CSP_PACKET]	= false,
-	[CSP_PROTOCOL]	= false,
-	[CSP_LOCK]		= false,
+static bool csp_debug_level_enabled[] = {
+    [CSP_ERROR]    = true,
+    [CSP_WARN]     = true,
+    [CSP_INFO]     = false,
+    [CSP_BUFFER]   = false,
+    [CSP_PACKET]   = false,
+    [CSP_PROTOCOL] = false,
+    [CSP_LOCK]     = false,
 };
 
-void csp_debug_hook_set(csp_debug_hook_func_t f) {
-	csp_debug_hook_func = f;
+void csp_assert_fail_action(const char * assertion, const char * file, int line)
+{
+#ifdef __AVR__
+    printf_P
+#else
+    printf
+#endif
+        ("\E[1;31m[%02" PRIu8 "] Assertion \'%s\' failed in %s:%d\E[0m\r\n",
+         csp_get_address(), assertion, file, line);
 }
 
-void do_csp_debug(csp_debug_level_t level, const char *format, ...) {
-
-	int color = COLOR_RESET;
-	va_list args;
-
-	/* Don't print anything if log level is disabled */
-	if (level > CSP_LOCK || !csp_debug_level_enabled[level])
-		return;
-
-	switch(level) {
-	case CSP_INFO:
-		color = COLOR_GREEN | COLOR_BOLD;
-		break;
-	case CSP_ERROR:
-		color = COLOR_RED | COLOR_BOLD;
-		break;
-	case CSP_WARN:
-		color = COLOR_YELLOW | COLOR_BOLD;
-		break;
-	case CSP_BUFFER:
-		color = COLOR_MAGENTA;
-		break;
-	case CSP_PACKET:
-		color = COLOR_GREEN;
-		break;
-	case CSP_PROTOCOL:
-		color = COLOR_BLUE;
-		break;
-	case CSP_LOCK:
-		color = COLOR_CYAN;
-		break;
-	default:
-		return;
-	}
-
-	va_start(args, format);
-
-	/* If csp_debug_hook symbol is defined, pass on the message.
-	 * Otherwise, just print with pretty colors ... */
-	if (csp_debug_hook_func) {
-		csp_debug_hook_func(level, format, args);
-	} else {
-		csp_sys_set_color(color);
-#if (CSP_DEBUG_TIMESTAMP)
-		csp_timestamp_t ts;
-		csp_clock_get_time(&ts);
-		fprintf(stdout, "%u.%06u ", ts.tv_sec, ts.tv_nsec / 1000U);
-#endif // CSP_DEBUG_TIMESTAMP
-
-		vfprintf(stdout, format, args);
-		fprintf(stdout, "\r\n");
-
-		csp_sys_set_color(COLOR_RESET);
-	}
-
-	va_end(args);
+/* Some compilers do not support weak symbols, so this function
+ * can be used instead to set a custom debug hook */
+void csp_debug_hook_set(csp_debug_hook_func_t f)
+{
+    csp_debug_hook_func = f;
 }
 
-void csp_debug_set_level(csp_debug_level_t level, bool value) {
+void do_csp_debug(csp_debug_level_t level, const char *format, ...)
+{
+    int color = COLOR_RESET;
+    va_list args;
 
-	if (level <= CSP_LOCK) {
-		csp_debug_level_enabled[level] = value;
-	}
+    /* Don't print anything if log level is disabled */
+    if (level > CSP_LOCK || !csp_debug_level_enabled[level])
+        return;
+
+    switch(level) {
+    case CSP_INFO:
+        color = COLOR_GREEN | COLOR_BOLD;
+        break;
+    case CSP_ERROR:
+        color = COLOR_RED | COLOR_BOLD;
+        break;
+    case CSP_WARN:
+        color = COLOR_YELLOW | COLOR_BOLD;
+        break;
+    case CSP_BUFFER:
+        color = COLOR_MAGENTA;
+        break;
+    case CSP_PACKET:
+        color = COLOR_GREEN;
+        break;
+    case CSP_PROTOCOL:
+        color = COLOR_BLUE;
+        break;
+    case CSP_LOCK:
+        color = COLOR_CYAN;
+        break;
+    default:
+        return;
+    }
+
+    va_start(args, format);
+
+    /* If csp_debug_hook symbol is defined, pass on the message.
+     * Otherwise, just print with pretty colors ... */
+    if (csp_debug_hook_func) {
+        csp_debug_hook_func(level, format, args);
+    } else {
+        csp_sys_set_color(color);
+#ifdef __AVR__
+        vfprintf_P(stdout, format, args);
+        printf_P(stdout, "\r\n");
+#else
+        (void) vprintf(format, args);
+        printf("\r\n");
+#endif
+        csp_sys_set_color(COLOR_RESET);
+    }
+
+    va_end(args);
 }
 
-int csp_debug_get_level(csp_debug_level_t level) {
-
-	if (level <= CSP_LOCK) {
-		return csp_debug_level_enabled[level];
-	}
-
-	return 0;
+void csp_debug_set_level(csp_debug_level_t level, bool value)
+{
+    if (level > CSP_LOCK)
+        return;
+    csp_debug_level_enabled[level] = value;
 }
 
-void csp_debug_toggle_level(csp_debug_level_t level) {
-
-	if (level <= CSP_LOCK) {
-		csp_debug_level_enabled[level] = (csp_debug_level_enabled[level]) ? false : true;
-	}
+int csp_debug_get_level(csp_debug_level_t level)
+{
+    if (level > CSP_LOCK)
+        return 0;
+    return csp_debug_level_enabled[level];
 }
 
-#endif // (CSP_DEBUG) && !(CSP_USE_EXTERNAL_DEBUG)
+void csp_debug_toggle_level(csp_debug_level_t level)
+{
+    if (level > CSP_LOCK) {
+        return;
+    }
+
+    csp_debug_level_enabled[level] =
+        (csp_debug_level_enabled[level]) ? false : true;
+}

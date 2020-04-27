@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -21,29 +21,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_SYSTEM_H_
 #define _CSP_SYSTEM_H_
 
-/**
-   @file
-
-   System interface.
-*/
-
-#include <stdint.h>
-#include <sys/types.h>
-
-#include <csp/csp_platform.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/** Color mask */
+#include <stdint.h>
+
+#include <csp/csp_compiler.h>
+
 #define COLOR_MASK_COLOR 	0x0F
-/** Color modifier mask */
 #define COLOR_MASK_MODIFIER	0xF0
 
-/**
-   Color and color modifiers.
-*/
 typedef enum {
 	/* Colors */
 	COLOR_RESET		= 0xF0,
@@ -64,71 +52,44 @@ typedef enum {
 } csp_color_t;
 
 /**
-   Get task list.
-   Write task list into a pre-allocate buffer.
-   @param[out] out pre-allocate buffer for returning task.
-   @param out_size size in bytes of the output buffer
-   @return #CSP_ERR_NONE on success.
-*/
-int csp_sys_tasklist(char * out, size_t out_size);
-
-/**
-   Free system memory.
-
-   @return Free system memory (bytes)
-*/
-uint32_t csp_sys_memfree(void);
-
-/**
-   Callback function for system reboot request.
-   @return #CSP_ERR_NONE on success (if function returns at all), or error code.
-*/
-typedef int (*csp_sys_reboot_t)(void);
-
-/**
-   Set system reboot/reset function.
-   Function will be called by csp_sys_reboot().
-   @param[in] reboot callback.
-   @see csp_sys_reboot_using_system(), csp_sys_reboot_using_reboot()
-*/
-void csp_sys_set_reboot(csp_sys_reboot_t reboot);
-
-/**
-   Reboot/reset system.
-   Reboot/resets the system by calling the function set by csp_sys_set_reboot().
-   @return #CSP_ERR_NONE on success (if function returns at all), or error code.
-*/
-int csp_sys_reboot(void);
-
-/**
-   Callback function for system shutdown request.
-   @return #CSP_ERR_NONE on success (if function returns at all), or error code.
-*/
-typedef int (*csp_sys_shutdown_t)(void);
-
-/**
-   Set system shutdown function.
-   Function will be called by csp_sys_shutdown().
-   @param[in] shutdown callback.
-   @see csp_sys_shutdown_using_system(), csp_sys_shutdown_using_reboot()
-*/
-void csp_sys_set_shutdown(csp_sys_shutdown_t shutdown);
-
-/**
-   Shutdown system.
-   Shuts down the system by calling the function set by csp_sys_set_shutdown().
-   @return #CSP_ERR_NONE on success (if function returns at all), or error code.
-*/
-int csp_sys_shutdown(void);
-
-/**
-   Set color on stdout.
-   @param[in] color color.
-*/
+ * @brief Sets the color of the csp generated output
+ * @param color The color to set
+ */
 void csp_sys_set_color(csp_color_t color);
 
+/**
+ * Writes out a task list into a pre-allocate buffer,
+ * use csp_sys_tasklist_size to get sizeof buffer to allocate
+ * @param out pointer to output buffer
+ * @return
+ */
+CSP_COMPILER_WEAK int csp_sys_tasklist(char * out);
+
+/**
+ * @return Size of tasklist buffer to allocate for the csp_sys_tasklist call
+ */
+CSP_COMPILER_WEAK int csp_sys_tasklist_size(void);
+
+/**
+ * @brief Determins how many bytes of memory are available on the system
+ * @return The amount of bytes of memory free on the system 
+ */
+CSP_COMPILER_WEAK uint32_t csp_sys_memfree(void);
+
+/**
+ * @brief Reboots the system
+ * @return
+ */
+CSP_COMPILER_WEAK int csp_sys_reboot(void);
+
+/**
+ * @brief Shuts down the system
+ * @return 
+ */
+CSP_COMPILER_WEAK int csp_sys_shutdown(void);
+
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
 #endif // _CSP_SYSTEM_H_

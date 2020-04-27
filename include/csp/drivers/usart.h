@@ -18,107 +18,66 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _CSP_DRIVERS_USART_H
-#define _CSP_DRIVERS_USART_H
-
 /**
-   @file
+ * @file usart.h
+ * Common USART interface,
+ * This file is derived from the GOMspace USART driver,
+ * the main difference is the assumption that only one USART will be present on a PC
+ *
+ * @todo (ASI) USART channels
+ */
 
-   USART driver.
+#ifndef _CSP_DRIVER_USART_H_
+#define _CSP_DRIVER_USART_H_
 
-   @note This interface implementation only support ONE open UART connection.
-*/
 #include <stdint.h>
-#include <sys/types.h>
-
-#include <csp/interfaces/csp_if_kiss.h>
-
-#if (CSP_WINDOWS)
-#include <Windows.h>
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
-   OS file handle.
-*/
-#if (CSP_WINDOWS)
-typedef HANDLE csp_usart_fd_t;
-#else
-typedef int csp_usart_fd_t;
-#endif
+ * Initialise UART with the usart_conf data structure
+ * @param conf Configuration parameters
+ */
+void csp_uapi_usart_init(struct usart_conf const const * conf);
 
 /**
-   Usart configuration.
-   @see csp_usart_open()
-*/
-typedef struct csp_usart_conf {
-	//! USART device.
-	const char *device;
-	//! bits per second.
-	uint32_t baudrate;
-	//! Number of data bits.
-	uint8_t databits;
-	//! Number of stop bits.
-	uint8_t stopbits;
-	//! Parity setting.
-	uint8_t paritysetting;
-	//! Enable parity checking (Windows only).
-	uint8_t checkparity;
-} csp_usart_conf_t;
+ * In order to catch incoming chars use the callback.
+ * Only one callback per interface.
+ * @param callback function pointer
+ */
+typedef void (*csp_usart_rx_callback_t) (uint8_t *buf, int len, void *pxTaskWoken);
+void csp_uapi_set_usart_rx_callback(csp_usart_rx_callback_t callback);
 
 /**
-   Callback for returning data to application.
-
-   @param[in] buf data received.
-   @param[in] len data length (number of bytes in \a buf).
-   @param[out] pxTaskWoken Valid reference if called from ISR, otherwise NULL!
-*/
-typedef void (*csp_usart_callback_t) (void * user_data, uint8_t *buf, size_t len, void *pxTaskWoken);
+ * Insert a character to the RX buffer of a usart
+ * @param handle usart[0,1,2,3]
+ * @param c Character to insert
+ */
+void csp_uapi_usart_insert(char c, void *pxTaskWoken);
 
 /**
-   Opens an UART device.
-
-   Opens the UART device and creates a thread for reading/returning data to the application.
-
-   @note On read failure, exit() will be called - terminating the process.
-
-   @param[in] conf UART configuration.
-   @param[in] rx_callback receive data callback.
-   @param[in] user_data reference forwarded to the \a rx_callback function.
-   @param[out] fd the opened file descriptor.
-   @return #CSP_ERR_NONE on success, otherwise an error code.
-*/
-int csp_usart_open(const csp_usart_conf_t *conf, csp_usart_callback_t rx_callback, void * user_data, csp_usart_fd_t * fd);
+ * Polling putchar
+ * @param c Character to transmit
+ */
+void csp_uapi_usart_putc(unsigned char c);
 
 /**
-   Write data on open UART.
-
-   @param[in] fd file descriptor.
-   @param[in] data data to write.
-   @param[in] data_length length of \a data.
-   @return number of bytes written on success, a negative value on failure.
-*/
-int csp_usart_write(csp_usart_fd_t fd, const void * data, size_t data_length);
+ * Send char buffer on UART
+ * @param buf Pointer to data
+ * @param len Length of data
+ */
+void csp_uapi_usart_putstr(unsigned char * buf, int len);
 
 /**
-   Opens UART device and add KISS interface.
+ * Buffered getchar
+ * @return Character received
+ */
+unsigned char csp_uapi_usart_getc(void);
 
-   This is a convience function for opening an UART device and adding it as an interface with a given name.
+/**
+ * @brief
+ * @param handle
+ * @return
+ */
+int csp_uapi_usart_messages_waiting(int handle);
 
-   @note On read failures, exit() will be called - terminating the process.
+#endif /* LIBCSP_DRIVER_USART_H_ */
 
-   @param[in] conf UART configuration.
-   @param[in] ifname internface name (will be copied), or use NULL for default name.
-   @param[out] return_iface the added interface.
-   @return #CSP_ERR_NONE on success, otherwise an error code.
-*/
-int csp_usart_open_and_add_kiss_interface(const csp_usart_conf_t *conf, const char * ifname, csp_iface_t ** return_iface);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // _CSP_DRIVERS_USART_H

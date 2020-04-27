@@ -18,80 +18,78 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _CSP_BUFFER_H_
-#define _CSP_BUFFER_H_
-
-/**
-   @file
-   Message buffer.
-*/
-
-#include <sys/types.h>
-
-#include <csp/csp_types.h>
+#ifndef LIBCSP_BUFFER_H_
+#define LIBCSP_BUFFER_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
-   Get free buffer (from task context).
-
-   @param[in] data_size minimum data size of requested buffer.
-   @return Buffer (pointer to #csp_packet_t) or NULL if no buffers available or size too big.
-*/
-void * csp_buffer_get(size_t data_size);
+extern unsigned int csp_global_buf_size;
+extern unsigned int csp_global_buf_count;
 
 /**
-   Get free buffer (from ISR context).
-
-   @param[in] data_size minimum data size of requested buffer.
-   @return Buffer (pointer to #csp_packet_t) or NULL if no buffers available or size too big.
-*/
-void * csp_buffer_get_isr(size_t data_size);
-
-/**
-   Free buffer (from task context).
-   @param[in] buffer buffer to free. NULL is handled gracefully.
-*/
-void csp_buffer_free(void *buffer);
+ * Start the buffer handling system
+ * You must specify the number for buffers and the size. All buffers are fixed
+ * size so you must specify the size of your largest buffer.
+ *
+ * @param count Number of buffers to allocate
+ * @param size Buffer size in bytes.
+ *
+ * @return CSP_ERR_NONE if malloc() succeeded, CSP_ERR message otherwise.
+ */
+int csp_buffer_init(unsigned int count, unsigned int size);
 
 /**
-   Free buffer (from ISR context).
-   @param[in] buffer buffer to free. NULL is handled gracefully.
-*/
-void csp_buffer_free_isr(void *buffer);
+ * Get a reference to a free buffer. This function can only be called
+ * from task context.
+ *
+ * @param size Specify what data-size you will put in the buffer
+ * @return pointer to a free csp_packet_t or NULL if out of memory
+ */
+void * csp_buffer_get(size_t size);
 
 /**
-   Clone an existing buffer.
-   The existing \a buffer content is copied to the new buffer.
-   @param[in] buffer buffer to clone.
-   @return cloned buffer on success, or NULL on failure.
-*/
+ * Get a reference to a free buffer. This function can only be called
+ * from interrupt context.
+ *
+ * @param buf_size Specify what data-size you will put in the buffer
+ * @return pointer to a free csp_packet_t or NULL if out of memory
+ */
+void * csp_buffer_get_isr(size_t buf_size);
+
+/**
+ * Free a buffer after use.
+ * @param packet pointer to memory area, must be acquired by csp_buffer_get().
+ */
+void csp_buffer_free(void *packet);
+
+/**
+ * Free a buffer after use in ISR context.
+ * @param packet pointer to memory area, must be acquired by csp_buffer_get().
+ */
+void csp_buffer_free_isr(void *packet);
+
+/**
+ * Clone an existing packet and increase/decrease cloned packet size.
+ * @param buffer Existing buffer to clone.
+ */
 void * csp_buffer_clone(void *buffer);
 
 /**
-   Return number of remaining/free buffers.
-   The number of buffers is set by csp_init().
-   @return number of remaining/free buffers
-*/
+ * Return how many buffers that are currently free.
+ * @return number of free buffers
+ */
 int csp_buffer_remaining(void);
 
 /**
-   Return the size of a CSP buffer.
-   @return size of a CSP buffer, sizeof(#csp_packet_t) + data_size.
-*/
-size_t csp_buffer_size(void);
-
-/**
-   Return the data size of a CSP buffer.
-   The data size is set by csp_init().
-   @return data size of a CSP buffer
-*/
-size_t csp_buffer_data_size(void);
+ * Return the size of the CSP buffers
+ * @return size of CSP buffers
+ */
+int csp_buffer_size(void);
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
-#endif // _CSP_BUFFER_H_
+#endif /* _CSP_BUFFER_H_ */

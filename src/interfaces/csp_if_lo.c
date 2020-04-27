@@ -18,37 +18,46 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "../csp_init.h"
-
+/* CSP includes */
+#include <csp/csp.h>
+#include <csp/csp_platform.h>
+#include <csp/csp_interface.h>
 #include <csp/interfaces/csp_if_lo.h>
+
+#include <csp/arch/csp_semaphore.h>
+#include <csp/arch/csp_queue.h>
+
+#include "../csp_route.h"
 
 /**
  * Loopback interface transmit function
  * @param packet Packet to transmit
+ * @param timeout Timout in ms
  * @return 1 if packet was successfully transmitted, 0 on error
  */
-static int csp_lo_tx(const csp_route_t * ifroute, csp_packet_t * packet) {
+static int csp_lo_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t timeout)
+{
+    (void) interface;
+    (void) timeout;
 
-	(void) ifroute;
+    /* Drop packet silently if not destined for us. This allows
+     * blackhole routing addresses by setting their nexthop to
+     * the loopback interface.
+     */
+    if (packet->id.dst != csp_get_address()) {
+        /* Consume and drop packet */
+        csp_buffer_free(packet);
+        return CSP_ERR_NONE;
+    }
 
-	/* Drop packet silently if not destined for us. This allows
-	 * blackhole routing addresses by setting their nexthop to
-	 * the loopback interface.
-	 */
-	if (packet->id.dst != csp_conf.address) {
-		/* Consume and drop packet */
-		csp_buffer_free(packet);
-		return CSP_ERR_NONE;
-	}
+    /* Send back into CSP, notice calling from task so last argument must be NULL! */
+    csp_qfifo_write(packet, &csp_if_lo, NULL);
 
-	/* Send back into CSP, notice calling from task so last argument must be NULL! */
-	csp_qfifo_write(packet, &csp_if_lo, NULL);
-
-	return CSP_ERR_NONE;
+    return CSP_ERR_NONE;
 }
 
 /* Interface definition */
-csp_iface_t csp_if_lo = {
-	.name = CSP_IF_LOOPBACK_NAME,
-	.nexthop = csp_lo_tx,
+csp_iface_t csp_if_lo = { /* not static since there is no init function */
+    .name = "LOOP",
+    .nexthop = csp_lo_tx,
 };

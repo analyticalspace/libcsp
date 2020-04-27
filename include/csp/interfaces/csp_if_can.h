@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -18,168 +18,87 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _CSP_INTERFACES_CSP_IF_CAN_H
-#define _CSP_INTERFACES_CSP_IF_CAN_H
-
-/**
-   @file
-
-   CAN interface.
-
-   CAN frames contains at most 8 bytes of data, so in order to transmit CSP 
-   packets larger than this, a fragmentation protocol is required.
-   The CAN Fragmentation Protocol (CFP) is based on CAN2.0B, using all 29 bits of the
-   identifier. The CAN identifier is divided into these fields:
-
-   - Source:	   5 bits
-   - Destination:  5 bits
-   - Type:		   1 bit
-   - Remain:	   8 bits
-   - Identifier:   10 bits
-
-   The \b Source and \b Destination fields must match the source and destiantion addressses in the CSP packet.
-   The \b Type field is used to distinguish the first and subsequent frames in a fragmented CSP
-   packet. Type is BEGIN (0) for the first fragment and MORE (1) for all other fragments.
-   The \b Remain field indicates number of remaining fragments, and must be decremented by one for each fragment sent.
-   The \b identifier field serves the same purpose as in the Internet Protocol, and should be an auto incrementing
-   integer to uniquely separate sessions.
-
-   Other CAN communication using a standard 11 bit identifier, can co-exist on the wire.
-*/
-
-#include <stdint.h>
-#include <csp/csp_interface.h>
+#ifndef _CSP_IF_CAN_H_
+#define _CSP_IF_CAN_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
-   @defgroup CFP_SIZE CAN message id field size.
-   @{
-*/
-/** Host - source/destination address. */
-#define CFP_HOST_SIZE		5
-/** Type - \a begin fragment or \a more fragments. */
-#define CFP_TYPE_SIZE		1
-/** Remaining fragments */
-#define CFP_REMAIN_SIZE		8
-/** CFP identification. */
-#define CFP_ID_SIZE			10
-/** @} */
+#include <stdint.h>
+#include <stdbool.h>
 
-/**
-   @defgroup CFP_FIELDS Macros for extracting fields from CAN message id.
-   @{
-*/
-/** Helper macro */
-#define CFP_FIELD(id,rsiz,fsiz) \
-	((uint32_t)((uint32_t)((id) >> (rsiz)) & (uint32_t)((1 << (fsiz)) - 1)))
+#include <csp/csp.h>
+#include <csp/csp_interface.h>
 
-/** Extract source address */
-#define CFP_SRC(id)		CFP_FIELD(id, CFP_HOST_SIZE + CFP_TYPE_SIZE + CFP_REMAIN_SIZE + CFP_ID_SIZE, CFP_HOST_SIZE)
-/** Extract destination address */
-#define CFP_DST(id)		CFP_FIELD(id, CFP_TYPE_SIZE + CFP_REMAIN_SIZE + CFP_ID_SIZE, CFP_HOST_SIZE)
-/** Extract type (begin or more) */
-#define CFP_TYPE(id)	CFP_FIELD(id, CFP_REMAIN_SIZE + CFP_ID_SIZE, CFP_TYPE_SIZE)
-/** Extract remaining fragments */
-#define CFP_REMAIN(id)	CFP_FIELD(id, CFP_ID_SIZE, CFP_REMAIN_SIZE)
-/** Extract CFP identification */
-#define CFP_ID(id)		CFP_FIELD(id, 0, CFP_ID_SIZE)
-/** @} */
-
-/**
-   @defgroup CFP_MAKE Macros for building CAN message id.
-   @{
-*/
-/** Helper macro */
-#define CFP_MAKE_FIELD(id,fsiz,rsiz) \
-	((uint32_t)(((id) & (uint32_t)((uint32_t)(1 << (fsiz)) - 1)) << (rsiz)))
-
-/** Make source */
-#define CFP_MAKE_SRC(id)	CFP_MAKE_FIELD(id, CFP_HOST_SIZE, CFP_HOST_SIZE + CFP_TYPE_SIZE + CFP_REMAIN_SIZE + CFP_ID_SIZE)
-/** Make destination */
-#define CFP_MAKE_DST(id)	CFP_MAKE_FIELD(id, CFP_HOST_SIZE, CFP_TYPE_SIZE + CFP_REMAIN_SIZE + CFP_ID_SIZE)
-/** Make type */
-#define CFP_MAKE_TYPE(id)	CFP_MAKE_FIELD(id, CFP_TYPE_SIZE, CFP_REMAIN_SIZE + CFP_ID_SIZE)
-/** Make remaining fragments */
-#define CFP_MAKE_REMAIN(id)	CFP_MAKE_FIELD(id, CFP_REMAIN_SIZE, CFP_ID_SIZE)
-/** Make CFP id */
-#define CFP_MAKE_ID(id)		CFP_MAKE_FIELD(id, CFP_ID_SIZE, 0)
-/** @} */
-
-/** Mask to uniquely separate connections */
-#define CFP_ID_CONN_MASK								\
-	(CFP_MAKE_SRC((uint32_t)(1 << CFP_HOST_SIZE) - 1) |	\
-	 CFP_MAKE_DST((uint32_t)(1 << CFP_HOST_SIZE) - 1) |	\
-	 CFP_MAKE_ID((uint32_t)(1 << CFP_ID_SIZE) - 1))
-
-/**
-   Default interface name.
-*/
-#define CSP_IF_CAN_DEFAULT_NAME "CAN"
-
-/**
-   Send CAN frame (implemented by driver).
-
-   Used by csp_can_tx() to send CAN frames.
-
-   @param[in] driver_data driver data from #csp_iface_t
-   @param[in] id CAM message id.
-   @param[in] data CAN data 
-   @param[in] dlc data length of \a data.
-   @return #CSP_ERR_NONE on success, otherwise an error code.
-*/
-typedef int (*csp_can_driver_tx_t)(void * driver_data, uint32_t id, const uint8_t * data, uint8_t dlc);
-
-/**
-   Interface data (state information).
-*/
-typedef struct {
-	/** CFP Identification number - same number on all fragments from same CSP packet. */
-	uint32_t cfp_frame_id;
-	/** Tx function */
-	csp_can_driver_tx_t tx_func;
-} csp_can_interface_data_t;
-
-/**
-   Add interface.
-
-   If the MTU is not set, it will be set to the maximum value of 2042 bytes (max length when using CFP).
-
-   @param[in] iface CSP interface, initialized with name and inteface_data pointing to a valid #csp_can_interface_data_t structure.
-   @return #CSP_ERR_NONE on success, otherwise an error code.
-*/
-int csp_can_add_interface(csp_iface_t * iface);
-
-/**
-   Send CSP packet over CAN (nexthop).
-
-   This function will split the CSP packet into several fragments and call csp_can_tx_fram() for sending each fragment.
-
-   @param[in] ifroute route.
-   @param[in] packet CSP packet to send.
-   @return #CSP_ERR_NONE on success, otherwise an error code.
-*/
-int csp_can_tx(const csp_route_t * ifroute, csp_packet_t *packet);
-
-/**
-   Process received CAN frame.
-
-   Called from driver when a single CAN frame (up to 8 bytes) has been received. The function will gather the fragments into a single
-   CSP packet and route it on when complete.
-
-   @param[in] iface incoming interface.
-   @param[in] id received CAN message identifier.
-   @param[in] data received CAN data.
-   @param[in] dlc length of received \a data.
-   @param[out] pxTaskWoken Valid reference if called from ISR, otherwise NULL!
-   @return #CSP_ERR_NONE on success, otherwise an error code.
-*/
-int csp_can_rx(csp_iface_t * iface, uint32_t id, const uint8_t * data, uint8_t dlc, CSP_BASE_TYPE *pxTaskWoken);
-
-#ifdef __cplusplus
-}
+#ifndef CSP_CAN_MAX_INTERFACES
+#   define CSP_CAN_MAX_INTERFACES (3)
 #endif
 
-#endif // _CSP_INTERFACES_CSP_IF_CAN_H
+/** CAN Identifier */
+typedef uint32_t can_id_t;
+
+/**
+ * @brief CAN interface configuration
+ * @details The user should allocate instances of these statically
+ *  as libcsp requires access and has loose ownership of this data.
+ *  It should also be noted that most fields here are optional aside from
+ *  `ifc` as libcsp uses `ifc` to tag the interface. The other fields
+ *  are Driver specific.
+ */
+typedef struct
+{
+    char const * ifc; /**< (Driver/Iface) Interface name. Used for the libcsp interface name,
+                        * and Optionally used by drivers for binding. */
+    uint8_t user_id; /**< Opaque field that can be set and used by the UAPI calls
+                      * to disambiguate the interface. */
+    bool use_extended_mask; /**< (Driver) Enables/Disables extended masking */
+    uint32_t bitrate; /**< (Driver) Driver specific bitrate modifier */
+    uint32_t clock_speed; /**< (Driver) Driver specific CAN clock specifier */
+    uint32_t impl_task_stack_size; /**< (Driver) Driver task(s) stack size  */
+    uint32_t impl_task_priority; /**< (Driver) Driver task(s) prio */
+
+    /* Private, set internally. */
+    can_id_t id; /**< The libcsp CFP created can ID */
+    uint32_t mask; /**< the libcsp CFP create can MASK */
+    uint8_t instance; /**< Driver/implementation instance index */
+    csp_iface_t * iface; /**< Interface reference. */
+
+} csp_can_if_config_t;
+
+/**
+ * @brief Initializes and binds a new CAN interface to CSP
+ * @details Up to CSP_CAN_MAX_INTERFACES can be creates as housekeeping
+ *  storage is maintained statically. This function will create libcsp specific
+ *  CAN id and CAN mask according to the CFP protocol and invoke csp_uapi_can_init()
+ *  to allow user code to apply to special id and mask to their driver's filters.
+ * @param conf The interface/driver configuration
+ * @return A pointer to the created interface
+ * @return NULL if creating the interface failed
+ */
+csp_iface_t * csp_can_init(csp_can_if_config_t * conf);
+
+/**
+ * @brief Inserts CAN data into libcsp
+ * @details This is to be called BY user code in a CAN RX interrupt or polling
+ *  mechanism.
+ * @param interface The interface receiving data. Note that this interface should be the
+ *  return from csp_can_init() for a specific configuration. You need to store that return
+ *  pointer so you can pass it to this function.
+ * @param id The CAN id on the received data - unmodified.
+ * @param data The CAN data payload
+ * @param dlc The CAN data payload length
+ * @param task_woken Context switch detection, NULL if no context switch needs to be
+ *  detected.
+ * @return CSP_ERR_NOMEM if an internal buffer cannot be allocated
+ * @return CSP_ERR_INVAL if the CFP state machine is voilated
+ * @return CSP_ERR_NONE otherwise
+ */
+int csp_can_rx(csp_iface_t * interface, uint32_t id, uint8_t const * data,
+               uint8_t dlc, CSP_BASE_TYPE * task_woken);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+#endif /* _CSP_IF_CAN_H_ */

@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -22,34 +22,35 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <time.h>
 #include <sys/time.h>
 
+/* CSP includes */
+#include <csp/csp.h>
 #include <csp/arch/csp_time.h>
 
-uint32_t csp_get_ms(void) {
+uint32_t csp_get_ms(void)
+{
+    struct timespec ts;
 
-	struct timespec ts;
-
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-		return (uint32_t)((ts.tv_sec * 1000) + (ts.tv_nsec / 1000000));
-	}
-
-	return 0;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+        return (uint32_t)(ts.tv_sec*1000+ts.tv_nsec/1000000);
+    else
+        return 0;
 }
 
-uint32_t csp_get_ms_isr(void) {
-	return csp_get_ms();
+uint32_t csp_get_ms_isr(void)
+{
+    return csp_get_ms();
 }
 
-uint32_t csp_get_s(void) {
+uint32_t csp_get_s(void)
+{
+    struct timespec ts;
 
-	struct timespec ts;
-
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-		return (uint32_t)ts.tv_sec;
-	}
-
-	return 0;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+        return (uint32_t)ts.tv_sec;
+    else
+        return 0;
 }
 
 uint32_t csp_get_s_isr(void) {
-	return csp_get_s();
+    return csp_get_s();
 }

@@ -18,107 +18,83 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef _CSP_INTERFACES_CSP_IF_KISS_H
-#define _CSP_INTERFACES_CSP_IF_KISS_H
-
-/**
-   @file
-
-   KISS interface (serial).
-*/
-
-#include <stdint.h>
-#include <stdbool.h>
-#include <sys/types.h>
-
-#include <csp/csp_interface.h>
-#include <csp/arch/csp_semaphore.h>
+#ifndef _CSP_IF_KISS_H_
+#define _CSP_IF_KISS_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
-   Default name of KISS interface.
-*/
-#define CSP_IF_KISS_DEFAULT_NAME "KISS"
+#include <stdint.h>
 
-/**
-   Send KISS frame (implemented by driver).
+#include <csp/csp.h>
+#include <csp/csp_interface.h>
 
-   @param[in] driver_data driver data from #csp_iface_t
-   @param[in] data data to send
-   @param[in] len length of \a data.
-   @return #CSP_ERR_NONE on success, otherwise an error code.
-*/
-typedef int (*csp_kiss_driver_tx_t)(void *driver_data, const uint8_t * data, size_t len);
-
-/**
-   KISS Rx mode/state.
-*/
-typedef enum {
-	KISS_MODE_NOT_STARTED,	//!< No start detected
-	KISS_MODE_STARTED,		//!< Started on a KISS frame
-	KISS_MODE_ESCAPED,		//!< Rx escape character
-	KISS_MODE_SKIP_FRAME,	//!< Skip remaining frame, wait for end character
-} csp_kiss_mode_t;
-
-/**
-   KISS interface data (state information).
-*/
-typedef struct {
-	// PUBLIC
-	/** Max Rx length */
-	unsigned int max_rx_length;
-	/** Tx function */
-	csp_kiss_driver_tx_t tx_func;
-
-	// PRIVATE
-	/** Tx lock. Current implementation doesn't transfer data to driver in a single 'write', hence locking is necessary. */
-	csp_mutex_t lock;
-	/** Rx mode/state. */
-	csp_kiss_mode_t rx_mode;
-	/** Rx length */
-	unsigned int rx_length;
-	/** Rx first - if set, waiting for first character (== TNC_DATA) after start */
-	bool rx_first;
-	/** CSP packet for storing Rx data. */
-	csp_packet_t * rx_packet;
-} csp_kiss_interface_data_t;
-
-/**
-   Add interface.
-
-   If the MTU is not set, it will be set to the csp_buffer_data_size() - sizeof(uint32_t), to make room for the CRC32 added to the packet.
-
-   @param[in] iface CSP interface, initialized with name and inteface_data pointing to a valid #csp_kiss_interface_data_t.
-   @return #CSP_ERR_NONE on success, otherwise an error code.
-*/
-int csp_kiss_add_interface(csp_iface_t * iface);
-
-/**
-   Send CSP packet over KISS (nexthop).
-
-   @param[in] ifroute route.
-   @param[in] packet CSP packet to send.
-   @return #CSP_ERR_NONE on success, otherwise an error code.
-*/
-int csp_kiss_tx(const csp_route_t * ifroute, csp_packet_t * packet);
-
-/**
-   Process received CAN frame.
-
-   Called from driver when a chunk of data has been received. Once a complete frame has been received, the CSP packet will be routed on.
-
-   @param[in] iface incoming interface.
-   @param[in] buf reveived data.
-   @param[in] len length of \a buf.
-   @param[out] pxTaskWoken Valid reference if called from ISR, otherwise NULL!
-*/
-void csp_kiss_rx(csp_iface_t * iface, const uint8_t * buf, size_t len, void * pxTaskWoken);
-
-#ifdef __cplusplus
-}
+#ifndef CSP_KISS_MAX_INTERFACES
+#   define CSP_KISS_MAX_INTERFACES (3)
 #endif
 
-#endif // _CSP_INTERFACES_CSP_IF_KISS_H
+/**
+ * @brief KISS interface configuration
+ * @details The user should allocate instances of these statically
+ *  as libcsp requires access and has loose ownership of this data.
+ */
+typedef struct {
+    char const * ifc; /**< (Driver/Iface) Interface name. Used for the libcsp
+                       * interface name and optionally used by drivers for binding */
+    uint16_t user_id; /**< Opaque field that can be set and used by the UAPI calls
+                       * to disambiguate the interface. */
+    /* Private, set internally */
+    uint8_t instance; /**< Driver/implementation instance index */
+    csp_iface_t * iface; /**< Interface reference. */
+} csp_kiss_if_config_t;
+
+
+/**
+ * @brief Initializes and binds a new KISS interface to CSP
+ * @details Up to CSP_KISS_MAX_INTERFACES can be creates as housekeeping
+ *  storage is maintained statically.
+ * @param conf The interface configuration
+ * @return A pointer to the created interface
+ * @return NULL if creating the interface failed
+ */
+csp_iface_t * csp_kiss_init(csp_kiss_if_config_t * conf);
+
+/**
+ * @brief Inserts a byte/char to the interface's KISS state machine
+ * @param buf The byte/char to insert
+ */
+void csp_uapi_kiss_putc(csp_iface_t * interface, unsigned char buf);
+
+/**
+ * @brief The characters not accepted by the kiss interface, are discarded
+ *  using this function, which must be implemented by the user
+ *  and passed through the kiss_init function.
+ * @details This reject function is typically used to display ASCII strings
+ *  sent over the serial port, which are not in KISS format. Such as
+ *  debugging information.
+ * @param c rejected character
+ * @param pxTaskWoken NULL if task context, pointer to variable if ISR
+ */
+void csp_uapi_kiss_discard(csp_iface_t * interface,
+                           unsigned char c, CSP_BASE_TYPE * task_woken);
+
+/**
+ * @brief Inserts KISS data into libcsp
+ * @param interface The interface receiving data. Note that this interface should be the
+ *  return from csp_kiss_init() for a specific configuration. You need to store that return
+ *  pointer so you can pass it to this function.
+ * @param buf The buffer of bytes received
+ * @param len The length of bytes received
+ * @param task_woken Context switch detection, NULL if no context switch needs to be
+ *  detected.
+ * @return CSP_ERR_NONE
+ */
+int csp_kiss_rx(csp_iface_t * interface, uint8_t * buf, uint32_t len,
+                CSP_BASE_TYPE * task_woken);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
+#endif /* _CSP_IF_KISS_H_ */
