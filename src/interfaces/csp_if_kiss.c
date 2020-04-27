@@ -57,7 +57,7 @@ typedef struct csp_kiss_handle_s
 static const char * default_kiss_ifc_name = "KISS";
 static csp_iface_t csp_kiss_interfaces[CSP_KISS_MAX_INTERFACES];
 static csp_iface_t csp_kiss_handles[CSP_KISS_MAX_INTERFACES];
-size_t csp_kiss_interfaces_count = 0;
+static size_t csp_kiss_interfaces_count = 0;
 
 static int csp_kiss_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t timeout)
 {
