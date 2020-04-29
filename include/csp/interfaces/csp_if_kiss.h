@@ -44,11 +44,29 @@ typedef struct {
                        * interface name and optionally used by drivers for binding */
     uint16_t user_id; /**< Opaque field that can be set and used by the UAPI calls
                        * to disambiguate the interface. */
+    void * opaque; /**< Opaque field that can be set and used by the UAPI calls
+                      * to disambiguate the interface */
     /* Private, set internally */
     uint8_t instance; /**< Driver/implementation instance index */
     csp_iface_t * iface; /**< Interface reference. */
 } csp_kiss_if_config_t;
 
+typedef enum {
+    KISS_MODE_NOT_STARTED,
+    KISS_MODE_STARTED,
+    KISS_MODE_ESCAPED,
+    KISS_MODE_SKIP_FRAME,
+} kiss_mode_e;
+
+typedef struct csp_kiss_handle_s
+{
+    kiss_mode_e rx_mode;
+    unsigned int rx_length;
+    unsigned int rx_first;
+    volatile unsigned char *rx_cbuf;
+    csp_packet_t * rx_packet;
+    void * driver_data;
+} csp_kiss_handle_t;
 
 /**
  * @brief Initializes and binds a new KISS interface to CSP

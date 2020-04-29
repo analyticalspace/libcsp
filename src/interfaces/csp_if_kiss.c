@@ -38,22 +38,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define TNC_SET_HARDWARE    (0x06)
 #define TNC_RETURN          (0xFF)
 
-typedef enum {
-    KISS_MODE_NOT_STARTED,
-    KISS_MODE_STARTED,
-    KISS_MODE_ESCAPED,
-    KISS_MODE_SKIP_FRAME,
-} kiss_mode_e;
-
-typedef struct csp_kiss_handle_s
-{
-    kiss_mode_e rx_mode;
-    unsigned int rx_length;
-    unsigned int rx_first;
-    volatile unsigned char *rx_cbuf;
-    csp_packet_t * rx_packet;
-} csp_kiss_handle_t;
-
 static const char * default_kiss_ifc_name = "KISS";
 static csp_iface_t csp_kiss_interfaces[CSP_KISS_MAX_INTERFACES];
 static csp_iface_t csp_kiss_handles[CSP_KISS_MAX_INTERFACES];
@@ -268,6 +252,7 @@ csp_iface_t * csp_kiss_init(csp_kiss_if_config_t * conf)
     new_if->driver = &csp_kiss_handles[csp_kiss_interfaces_count];
     ((csp_kiss_handle_t *)(new_if->driver))->rx_packet = NULL;
     ((csp_kiss_handle_t *)(new_if->driver))->rx_mode = KISS_MODE_NOT_STARTED;
+    ((csp_kiss_handle_t *)(new_if->driver))->driver_data = conf;
 
     /* Regsiter interface */
     csp_iflist_add(new_if);

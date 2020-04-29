@@ -40,11 +40,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 int csp_thread_create(csp_thread_return_t (* routine)(void *), const char * const thread_name,
                       unsigned int stack_depth, void * parameters,
-                      unsigned int priority, csp_thread_handle_t * handle)
+                      unsigned int priority, csp_thread_handle_t * return_handle)
 {
     (void) priority;
 
     int check;
+    pthread_t handle;
     pthread_attr_t attr;
     size_t normalized_stack_depth;
 
@@ -96,17 +97,20 @@ int csp_thread_create(csp_thread_return_t (* routine)(void *), const char * cons
     }
 
     if (0 !=
-        (check = pthread_create(handle, &attr, routine, parameters)))
+        (check = pthread_create(&handle, &attr, routine, parameters)))
     {
         return CSP_ERR_NOMEM;
     }
 
 #ifdef __linux__
     if (0 !=
-        (check = pthread_setname_np(*handle, thread_name))) {
+        (check = pthread_setname_np(handle, thread_name))) {
         return CSP_ERR_INVAL;
     }
 #endif
+
+    if (return_handle)
+        *return_handle = handle;
 
     (void) pthread_attr_destroy(&attr);
 
