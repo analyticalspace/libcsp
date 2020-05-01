@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 static const char * default_kiss_ifc_name = "KISS";
 static csp_iface_t csp_kiss_interfaces[CSP_KISS_MAX_INTERFACES];
-static csp_iface_t csp_kiss_handles[CSP_KISS_MAX_INTERFACES];
+static csp_kiss_handle_t csp_kiss_handles[CSP_KISS_MAX_INTERFACES];
 static size_t csp_kiss_interfaces_count = 0;
 
 static int csp_kiss_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t timeout)
