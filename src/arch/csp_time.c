@@ -17,16 +17,9 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
+#include <stdint.h>
 #include <csp/arch/csp_time.h>
 
-static uint32_t uptime_s_offset = 0;
-
 uint32_t csp_get_uptime_s(void) {
-
-	uint32_t seconds = csp_get_s();
-	if (uptime_s_offset == 0) {
-		uptime_s_offset = seconds;
-	}
-	return (seconds - uptime_s_offset);
+	return csp_get_s();
 }

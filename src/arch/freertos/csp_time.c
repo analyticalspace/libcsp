@@ -26,11 +26,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/arch/csp_time.h>
 
 uint32_t csp_get_ms(void) {
-	return (uint32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS));
+	return (uint32_t)(xTaskGetTickCount() / portTICK_PERIOD_MS);
 }
 
 uint32_t csp_get_ms_isr(void) {
-	return (uint32_t)(xTaskGetTickCountFromISR() * portTICK_PERIOD_MS);
+	return (uint32_t)(xTaskGetTickCountFromISR() / portTICK_PERIOD_MS);
 }
 
 uint32_t csp_get_s(void) {

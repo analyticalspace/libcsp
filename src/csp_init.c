@@ -37,9 +37,6 @@ uint8_t csp_get_address(void) {
 
 int csp_init(const csp_conf_t * conf) {
 
-	/* make offset first time, so uptime is counted from process/task boot */
-	csp_get_uptime_s();
-
 	/* Make a copy of the configuration
 	 * The copy is kept hidden for the user in csp_init.h
 	 * Configuration cannot be changed after calling init

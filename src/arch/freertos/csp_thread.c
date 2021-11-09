@@ -34,42 +34,42 @@ int csp_thread_create(csp_thread_func_t routine, const char * const thread_name,
 #ifdef configSTACK_DEPTH_TYPE
 	configSTACK_DEPTH_TYPE normalized_stack_depth;
 #else
-	uint16_t normalized_stack_depth;
+	int16_t normalized_stack_depth;
 #endif
 
 	UBaseType_t normalized_prio;
 
-	/* chose the FreeRTOS default when stack_depth is 0 */
-	if (stack_depth == 0) {
+	/* chose the FreeRTOS default when stack_size is 0 */
+	if (stack_size == 0) {
 		normalized_stack_depth = configMINIMAL_STACK_SIZE;
 
-		csp_log_warn("%s: '%s', defaulting stack_depth to %u",
+		csp_log_warn("%s: '%s', defaulting stack_size to %d",
 					 __func__, thread_name, normalized_stack_depth);
 	}
 	/* normalize against the FreeRTOS default when too low */
-	else if (stack_depth < configMINIMAL_STACK_SIZE)
+	else if (stack_size < configMINIMAL_STACK_SIZE)
 	{
 		normalized_stack_depth = configMINIMAL_STACK_SIZE;
 
-		csp_log_warn("%s: '%s', normalizing stack_depth to %u",
+		csp_log_warn("%s: '%s', normalizing stack_size to %d",
 					 __func__, thread_name, normalized_stack_depth);
 	}
 	else {
-		normalized_stack_depth = stack_depth;
+		normalized_stack_depth = stack_size;
 	}
 
 	if (priority == 0)
 	{
 		normalized_prio = 1;
 
-		csp_log_warn("%s: '%s', defaulting priority to %u",
+		csp_log_warn("%s: '%s', defaulting priority to %lu",
 					 __func__, thread_name, normalized_prio);
 	}
 	else if (priority > configMAX_PRIORITIES)
 	{
 		normalized_prio = configMAX_PRIORITIES;
 
-		csp_log_warn("%s: '%s', normalizing priority to %u",
+		csp_log_warn("%s: '%s', normalizing priority to %lu",
 					 __func__, thread_name, normalized_prio);
 	}
 	else {
