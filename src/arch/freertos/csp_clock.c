@@ -28,6 +28,7 @@ CSP_COMPILER_WEAK void csp_clock_get_time(csp_timestamp_t * time) {
 }
 
 CSP_COMPILER_WEAK int csp_clock_set_time(const csp_timestamp_t * time) {
+	(void) time;
 	csp_log_warn("csp_clock_set_time() not supported");
 	return CSP_ERR_NOTSUP;
 }

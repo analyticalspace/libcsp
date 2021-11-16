@@ -310,6 +310,7 @@ int csp_close(csp_conn_t * conn) {
 }
 
 int csp_conn_close(csp_conn_t * conn, uint8_t closed_by) {
+	(void) closed_by;
 
 	if (conn == NULL) {
 		return CSP_ERR_NONE;
