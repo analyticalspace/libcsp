@@ -318,7 +318,7 @@ int csp_route_work(uint32_t timeout) {
 	return CSP_ERR_NONE;
 }
 
-static CSP_DEFINE_TASK(csp_task_router) {
+CSP_DEFINE_TASK(csp_task_router) {
 
 	(void) param;
 

@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/csp_iflist.h>
 #include <csp/csp_sfp.h>
 #include <csp/csp_promisc.h>
+#include <csp/arch/csp_thread.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -302,6 +303,11 @@ int csp_listen(csp_socket_t *socket, size_t backlog);
    @return #CSP_ERR_NONE on success, otherwise an error code.
 */
 int csp_bind(csp_socket_t *socket, uint8_t port);
+
+/**
+ * @brief CSP's main router task
+ */
+CSP_DEFINE_TASK(csp_task_router);
 
 /**
    Start the router task.
