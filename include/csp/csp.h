@@ -472,16 +472,6 @@ void csp_rdp_get_opt(unsigned int *window_size, unsigned int *conn_timeout_ms,
 void csp_conn_print_table(void);
 
 /**
-   Print connection table to string.
-*/
-int csp_conn_print_table_str(char * str_buf, int str_size);
-
-/**
-   Print buffer usage table to stdout.
-*/
-void csp_buffer_print_table(void);
-
-/**
    Hex dump memory to stdout.
    @param[in] desc description printed on first line.
    @param[in] addr memory address.

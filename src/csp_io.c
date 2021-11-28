@@ -18,7 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -179,7 +179,7 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_route_t * i
 	}
 
 	if (ifroute == NULL) {
-		csp_log_error("No route to host: %u (0x%08"PRIx32")", idout.dst, idout.ext);
+		csp_log_error("No route to host: %u (0x%08" PRIx32 ")", idout.dst, idout.ext);
 		goto err;
 	}
 

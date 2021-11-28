@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <stdint.h>
+#include <inttypes.h>
 #include <semaphore.h>
 
 #include <csp/arch/csp_semaphore.h>
@@ -45,7 +46,7 @@ int csp_mutex_lock(csp_mutex_t * mutex, uint32_t timeout) {
 
 	int ret;
 
-	csp_log_lock("Wait: %p timeout %"PRIu32, mutex, timeout);
+	csp_log_lock("Wait: %p timeout %" PRIu32, mutex, timeout);
 
 	if (timeout == CSP_MAX_TIMEOUT) {
 		ret = pthread_mutex_lock(mutex);
@@ -109,7 +110,7 @@ int csp_bin_sem_wait(csp_bin_sem_handle_t * sem, uint32_t timeout) {
 
 	int ret;
 
-	csp_log_lock("Wait: %p timeout %"PRIu32, sem, timeout);
+	csp_log_lock("Wait: %p timeout %" PRIu32, sem, timeout);
 
 	if (timeout == CSP_MAX_TIMEOUT) {
 		ret = sem_wait(sem);

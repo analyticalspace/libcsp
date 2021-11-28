@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <stdio.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #include <csp/csp.h>
 #include <csp/csp_cmp.h>
@@ -189,7 +190,7 @@ void csp_memfree(uint8_t node, uint32_t timeout) {
 	int err = csp_get_memfree(node, timeout, &memfree);
 
 	if (err == CSP_ERR_NONE) {
-		printf("Free Memory at node %u is %"PRIu32" bytes\r\n", node, memfree);
+		printf("Free Memory at node %u is %" PRIu32 " bytes\r\n", node, memfree);
 	} else {
 		printf("Network error\r\n");
 	}
@@ -213,7 +214,7 @@ void csp_buf_free(uint8_t node, uint32_t timeout) {
 	int err = csp_get_buf_free(node, timeout, &size);
 
 	if (err == CSP_ERR_NONE) {
-		printf("Free buffers at node %u is %"PRIu32"\r\n", node, size);
+		printf("Free buffers at node %u is %" PRIu32 "\r\n", node, size);
 	} else {
 		printf("Network error\r\n");
 	}
@@ -237,7 +238,7 @@ void csp_uptime(uint8_t node, uint32_t timeout) {
 	uint32_t uptime;
 	int err = csp_get_uptime(node, timeout, &uptime);
 	if (err == CSP_ERR_NONE) {
-		printf("Uptime of node %u is %"PRIu32" s\r\n", node, uptime);
+		printf("Uptime of node %u is %" PRIu32 " s\r\n", node, uptime);
 	} else {
 		printf("Network error\r\n");
 	}

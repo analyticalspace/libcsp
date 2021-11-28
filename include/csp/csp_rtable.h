@@ -162,14 +162,6 @@ static inline void csp_route_print_table() {
 	csp_rtable_print();
 }
 
-/**
-   Print list of interfaces.
-   @deprecated Use csp_iflist_print() instead.
-*/
-static inline void csp_route_print_interfaces(void) {
-	csp_iflist_print();
-}
-
 #ifdef __cplusplus
 }
 #endif

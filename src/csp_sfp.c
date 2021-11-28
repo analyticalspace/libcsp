@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "csp_conn.h"
@@ -166,13 +167,13 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 			goto error;
 		}
 
-		csp_log_protocol("%s: %u:%u, fragment %"PRIu32"/%"PRIu32,
+		csp_log_protocol("%s: %u:%u, fragment %" PRIu32 "/%" PRIu32,
 						 __FUNCTION__, packet->id.src, packet->id.sport,
 						 sfp_header->offset + packet->length, sfp_header->totalsize);
 
 		/* Consistency check */
 		if (sfp_header->offset != data_offset) {
-			csp_log_warn("%s: %u:%u, invalid message, offset %"PRIu32" (expected %"PRIu32"), length: %u, totalsize %"PRIu32,
+			csp_log_warn("%s: %u:%u, invalid message, offset %" PRIu32 " (expected %" PRIu32 "), length: %u, totalsize %" PRIu32,
 						 __FUNCTION__, packet->id.src, packet->id.sport,
 						 sfp_header->offset, data_offset, packet->length, sfp_header->totalsize);
 			csp_buffer_free(packet);
@@ -187,7 +188,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 			data = csp_malloc(datasize);
 
 			if (data == NULL) {
-				csp_log_warn("%s: %u:%u, csp_malloc(%"PRIu32") failed",
+				csp_log_warn("%s: %u:%u, csp_malloc(%" PRIu32 ") failed",
 							 __FUNCTION__, packet->id.src, packet->id.sport,
 							 datasize);
 				csp_buffer_free(packet);
@@ -200,7 +201,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 		/* Consistency check */
 		if (((data_offset + packet->length) > datasize) || (datasize != sfp_header->totalsize))
 		{
-			csp_log_warn("%s: %u:%u, invalid size, sfp.offset: %"PRIu32", length: %u, total: %"PRIu32" / %"PRIu32"",
+			csp_log_warn("%s: %u:%u, invalid size, sfp.offset: %" PRIu32 ", length: %u, total: %" PRIu32 " / %" PRIu32,
 					__FUNCTION__, packet->id.src, packet->id.sport,
 					sfp_header->offset, packet->length, datasize, sfp_header->totalsize);
 			csp_buffer_free(packet);
@@ -224,7 +225,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 
 		/* Consistency check */
 		if (packet->length == 0) {
-			csp_log_warn("%s: %u:%u, invalid size, sfp.offset: %"PRIu32", length: %u, total: %"PRIu32" / %"PRIu32"",
+			csp_log_warn("%s: %u:%u, invalid size, sfp.offset: %" PRIu32 ", length: %u, total: %" PRIu32 " / %" PRIu32,
 					__FUNCTION__, packet->id.src, packet->id.sport,
 					sfp_header->offset, packet->length, datasize, sfp_header->totalsize);
 

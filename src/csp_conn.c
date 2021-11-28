@@ -19,7 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <stddef.h>
 #include <sys/types.h>
 
@@ -497,14 +496,14 @@ int csp_conn_flags(csp_conn_t * conn) {
 	return conn->idin.flags;
 }
 
-#if (CSP_DEBUG)
 void csp_conn_print_table(void) {
 
 	for (unsigned int i = 0; i < csp_conf.conn_max; i++) {
 		csp_conn_t * conn = &arr_conn[i];
-		printf("[%02u %p] S:%u, %u -> %u, %u -> %u, sock: %p\r\n",
-				i, conn, conn->state, conn->idin.src, conn->idin.dst,
-				conn->idin.dport, conn->idin.sport, conn->socket);
+		/* always do error so it (likely) shows up */
+		csp_log_error("[%02u %p] S:%u, %u -> %u, %u -> %u, sock: %p\r\n",
+					  i, conn, conn->state, conn->idin.src, conn->idin.dst,
+					  conn->idin.dport, conn->idin.sport, conn->socket);
 #if (CSP_USE_RDP)
 		if (conn->idin.flags & CSP_FRDP) {
 			csp_rdp_conn_print(conn);
@@ -512,28 +511,6 @@ void csp_conn_print_table(void) {
 #endif
 	}
 }
-
-int csp_conn_print_table_str(char * str_buf, int str_size) {
-
-	/* Display up to 10 connections */
-	unsigned int start = (csp_conf.conn_max > 10) ? (csp_conf.conn_max - 10) : 0;
-
-	for (unsigned int i = start; i < csp_conf.conn_max; i++) {
-		csp_conn_t * conn = &arr_conn[i];
-		char buf[100];
-		snprintf(buf, sizeof(buf), "[%02u %p] S:%u, %u -> %u, %u -> %u, sock: %p\n",
-				i, conn, conn->state, conn->idin.src, conn->idin.dst,
-				conn->idin.dport, conn->idin.sport, conn->socket);
-
-		strncat(str_buf, buf, str_size);
-		if ((str_size -= strlen(buf)) <= 0) {
-			break;
-		}
-	}
-
-	return CSP_ERR_NONE;
-}
-#endif // CSP_DEBUG
 
 const csp_conn_t * csp_conn_get_array(size_t * size)
 {

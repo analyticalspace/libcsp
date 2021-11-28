@@ -148,16 +148,16 @@ static CSP_DEFINE_TASK(csp_zmqhub_rx)
    @return #CSP_ERR_NONE on succcess - else assert.
 */
 static int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * ifname,
-                                                     const uint8_t rxfilter[], unsigned int rxfilter_count,
-                                                     const char * publish_endpoint,
-                                                     const char * subscribe_endpoint,
-                                                     uint32_t flags,
-                                                     csp_iface_t ** return_interface)
+													 const uint8_t rxfilter[], unsigned int rxfilter_count,
+													 const char * publish_endpoint,
+													 const char * subscribe_endpoint,
+													 uint32_t flags,
+													 csp_iface_t ** return_interface)
 {
 	zmq_driver_t * drv = csp_calloc(1, sizeof(*drv));
 	assert(drv);
 
-    (void) flags;
+	(void) flags;
 
 	if (ifname == NULL) {
 		ifname = CSP_ZMQHUB_IF_NAME;
@@ -167,8 +167,8 @@ static int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * ifname,
 	drv->iface.name = drv->name;
 	drv->iface.driver_data = drv;
 	drv->iface.nexthop = csp_zmqhub_tx;
-    // there is actually no 'max' MTU on ZMQ,
-    // but assuming the other end is based on the same code
+	// there is actually no 'max' MTU on ZMQ,
+	// but assuming the other end is based on the same code
 	drv->iface.mtu = CSP_ZMQ_MTU;
 
 	drv->context = zmq_ctx_new();
@@ -225,10 +225,10 @@ static int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * ifname,
    @return #CSP_ERR_NONE on succcess - else assert.
 */
 static int csp_zmqhub_init_w_endpoints(uint8_t addr,
-                                       const char * publisher_endpoint,
-                                       const char * subscriber_endpoint,
-                                       uint32_t flags,
-                                       csp_iface_t ** return_interface)
+									   const char * publisher_endpoint,
+									   const char * subscriber_endpoint,
+									   uint32_t flags,
+									   csp_iface_t ** return_interface)
 {
 	uint8_t * rxfilter = NULL;
 	unsigned int rxfilter_count = 0;
@@ -254,7 +254,7 @@ static int csp_zmqhub_init_w_endpoints(uint8_t addr,
    @return #CSP_ERR_NOMEM if supplied buffer too small.
 */
 static int csp_zmqhub_make_endpoint(const char * host, uint16_t port, char * buf,
-                                    size_t buf_size)
+									size_t buf_size)
 {
 	int res = snprintf(buf, buf_size, "tcp://%s:%u", host, port);
 

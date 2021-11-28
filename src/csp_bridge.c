@@ -18,6 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <inttypes.h>
+
 #include <csp/csp.h>
 #include <csp/csp_debug.h>
 #include <csp/csp_interface.h>
@@ -50,7 +52,7 @@ static CSP_DEFINE_TASK(csp_bridge) {
 
 		csp_packet_t * packet = input.packet;
 
-		csp_log_packet("Input: Src %u, Dst %u, Dport %u, Sport %u, Pri %u, Flags 0x%02X, Size %"PRIu16,
+		csp_log_packet("Input: Src %u, Dst %u, Dport %u, Sport %u, Pri %u, Flags 0x%02X, Size %" PRIu16,
 				packet->id.src, packet->id.dst, packet->id.dport,
 				packet->id.sport, packet->id.pri, packet->id.flags, packet->length);
 

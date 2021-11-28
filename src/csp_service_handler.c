@@ -18,6 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <inttypes.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -153,7 +154,7 @@ static int do_cmp_clock(struct csp_cmp_message *cmp) {
 		res = csp_clock_set_time(&clock);
 
 		if (res != CSP_ERR_NONE) {
-			csp_log_warn("csp_clock_set_time(sec=%"PRIu32", nsec=%"PRIu32") failed, error: %d",
+			csp_log_warn("csp_clock_set_time(sec=%" PRIu32 ", nsec=%" PRIu32 ") failed, error: %d",
 						 clock.tv_sec, clock.tv_nsec, res);
 		}
 	}
@@ -230,7 +231,7 @@ void csp_service_handler(csp_conn_t * conn, csp_packet_t * packet) {
 
 	case CSP_PING:
 		/* A ping means, just echo the packet, so no changes */
-		csp_log_info("SERVICE: Ping received");
+		//csp_log_info("SERVICE: Ping received");
 		break;
 
 	case CSP_PS: {

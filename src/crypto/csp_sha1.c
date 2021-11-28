@@ -30,13 +30,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* Endian Neutral macros that work on all platforms */
 #define STORE32H(x, y) do { (y)[0] = (uint8_t)(((x) >> 24) & 0xff); \
 							(y)[1] = (uint8_t)(((x) >> 16) & 0xff); \
-							(y)[2] = (uint8_t)(((x) >>  8) & 0xff); \
-							(y)[3] = (uint8_t)(((x) >>  0) & 0xff); } while (0)
+							(y)[2] = (uint8_t)(((x) >>	8) & 0xff); \
+							(y)[3] = (uint8_t)(((x) >>	0) & 0xff); } while (0)
 
 #define LOAD32H(x, y)  do { (x) = ((uint32_t)((y)[0] & 0xff) << 24) | \
-							   	  ((uint32_t)((y)[1] & 0xff) << 16) | \
-							   	  ((uint32_t)((y)[2] & 0xff) <<  8) | \
-							   	  ((uint32_t)((y)[3] & 0xff) <<  0); } while (0)
+								  ((uint32_t)((y)[1] & 0xff) << 16) | \
+								  ((uint32_t)((y)[2] & 0xff) <<  8) | \
+								  ((uint32_t)((y)[3] & 0xff) <<  0); } while (0)
 
 #define STORE64H(x, y) do {	(y)[0] = (uint8_t)(((x) >> 56) & 0xff); \
 							(y)[1] = (uint8_t)(((x) >> 48) & 0xff); \
@@ -44,8 +44,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 							(y)[3] = (uint8_t)(((x) >> 32) & 0xff); \
 							(y)[4] = (uint8_t)(((x) >> 24) & 0xff); \
 							(y)[5] = (uint8_t)(((x) >> 16) & 0xff); \
-							(y)[6] = (uint8_t)(((x) >>  8) & 0xff); \
-							(y)[7] = (uint8_t)(((x) >>  0) & 0xff); } while (0)
+							(y)[6] = (uint8_t)(((x) >>	8) & 0xff); \
+							(y)[7] = (uint8_t)(((x) >>	0) & 0xff); } while (0)
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 

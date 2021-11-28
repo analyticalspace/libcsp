@@ -21,24 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_DEBUG_H_
 #define _CSP_DEBUG_H_
 
-/**
-   @file
-   Debug and log.
-*/
-
 #include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
 #include <stdbool.h>
-#include <inttypes.h>
-
-#include <csp/csp_types.h>
-
-#if (CSP_USE_EXTERNAL_DEBUG)
-/* Use external csp_debug API */
-#include <csp/external/csp_debug.h>
-
-#else 
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,37 +46,7 @@ typedef enum {
 */
 extern bool csp_debug_level_enabled[];
 
-/**
-   Extract filename component from path
-*/
-#define BASENAME(_file) ((strrchr(_file, '/') ? : (strrchr(_file, '\\') ? : _file)) + 1)
-
-/**
-   Implement csp_assert_fail_action to override default failure action
-*/
-extern void CSP_COMPILER_WEAK csp_assert_fail_action(const char *assertion, const char *file, int line);
-
-/**
-   CSP assert.
-*/
-#if (!defined(NDEBUG) || CSP_USE_ASSERT)
-#define csp_assert(exp) {												\
-		if (!(exp)) {													\
-			const char *assertion = #exp;								\
-			const char *file = BASENAME(__FILE__);						\
-			int line = __LINE__;										\
-			printf("\E[1;31mAssertion \'%s\' failed in %s:%d\E[0m\r\n", \
-				   assertion, file, line);								\
-			if (csp_assert_fail_action)									\
-				csp_assert_fail_action(assertion, file, line);			\
-		}																\
-	}
-#else
-#define csp_assert(...) {}
-#endif
-
 #if !(__DOXYGEN__)
-/* Ensure defines are 'defined' */
 #if !defined(CSP_DEBUG)
 #define CSP_DEBUG 0
 #endif
@@ -113,30 +67,12 @@ extern void CSP_COMPILER_WEAK csp_assert_fail_action(const char *assertion, cons
 #define CSP_LOG_LEVEL_ERROR 0
 #endif
 #endif // __DOXYGEN__
-
-#ifdef __AVR__
-#	include <stdio.h>
-#	include <avr/pgmspace.h>
-#	define CONSTSTR(data) PSTR(data)
-#	undef printf
-#	undef sscanf
-#	undef scanf
-#	undef sprintf
-#	undef snprintf
-#	define printf(s, ...) printf_P(PSTR(s), ## __VA_ARGS__)
-#	define sscanf(buf, s, ...) sscanf_P(buf, PSTR(s), ## __VA_ARGS__)
-#	define scanf(s, ...) scanf_P(PSTR(s), ## __VA_ARGS__)
-#	define sprintf(buf, s, ...) sprintf_P(buf, PSTR(s), ## __VA_ARGS__)
-#	define snprintf(buf, size, s, ...) snprintf_P(buf, size, PSTR(s), ## __VA_ARGS__)
-#	define csp_debug(level, format, ...) { if (CSP_DEBUG && csp_debug_level_enabled[level]) do_csp_debug(level, PSTR(format), ##__VA_ARGS__); }
-#else
 /**
  * Log message with specific level.
  * @param level log level
  * @param format log message, printf syntax.
  */
-#define csp_debug(level, format, ...) { if (CSP_DEBUG && csp_debug_level_enabled[level]) do_csp_debug(level, format, ##__VA_ARGS__); }
-#endif
+#define csp_debug(level, format, ...) { if (csp_debug_level_enabled[level]) do_csp_debug(level, format, ##__VA_ARGS__); }
 
 /**
  * Log message with level #CSP_ERROR.
@@ -181,6 +117,16 @@ extern void CSP_COMPILER_WEAK csp_assert_fail_action(const char *assertion, cons
 #define csp_log_lock(format, ...)	  { if (CSP_LOG_LEVEL_DEBUG) csp_debug(CSP_LOCK, format, ##__VA_ARGS__); }
 
 /**
+ * Debug hook function.
+ */
+typedef void (*csp_debug_hook_func_t)(csp_debug_level_t level, const char *format, va_list args);
+
+/**
+ * Set debug/log hook function.
+ */
+void csp_debug_hook_set(csp_debug_hook_func_t f);
+
+/**
  * Do the actual logging (don't use directly).
  * @note Use the csp_log_<level>() macros instead.
  * @param level log level
@@ -208,17 +154,6 @@ void csp_debug_set_level(csp_debug_level_t level, bool value);
  */
 int csp_debug_get_level(csp_debug_level_t level);
 
-/**
- * Debug hook function.
- */
-typedef void (*csp_debug_hook_func_t)(csp_debug_level_t level, const char *format, va_list args);
-
-/**
- * Set debug/log hook function.
- */
-void csp_debug_hook_set(csp_debug_hook_func_t f);
-
-#endif // CSP_USE_EXTERNAL_DEBUG
 #ifdef __cplusplus
 }
 #endif

@@ -74,7 +74,7 @@ int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, unsigned int d
    @return #CSP_ERR_NONE on success, otherwise an error.
 */
 static inline int csp_sfp_send(csp_conn_t * conn, const void * data, unsigned int datasize, unsigned int mtu, uint32_t timeout) {
-    return csp_sfp_send_own_memcpy(conn, data, datasize, mtu, timeout, (csp_memcpy_fnc_t) &memcpy);
+	return csp_sfp_send_own_memcpy(conn, data, datasize, mtu, timeout, (csp_memcpy_fnc_t) &memcpy);
 }
 
 /**
@@ -103,7 +103,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t
    @return #CSP_ERR_NONE on success, otherwise an error.
 */
 static inline int csp_sfp_recv(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t timeout) {
-    return csp_sfp_recv_fp(conn, dataout, datasize, timeout, NULL);
+	return csp_sfp_recv_fp(conn, dataout, datasize, timeout, NULL);
 }
 
 #ifdef __cplusplus

@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -183,7 +184,7 @@ int csp_route_work(uint32_t timeout) {
 		return CSP_ERR_TIMEDOUT;
 	}
 
-	csp_log_packet("INP: S %u, D %u, Dp %u, Sp %u, Pr %u, Fl 0x%02X, Sz %"PRIu16" VIA: %s",
+	csp_log_packet("INP: S %u, D %u, Dp %u, Sp %u, Pr %u, Fl 0x%02X, Sz %" PRIu16 " VIA: %s",
 			packet->id.src, packet->id.dst, packet->id.dport,
 			packet->id.sport, packet->id.pri, packet->id.flags, packet->length, input.iface->name);
 

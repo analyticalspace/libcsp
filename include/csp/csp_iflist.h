@@ -54,21 +54,11 @@ int csp_iflist_add(csp_iface_t * iface);
 csp_iface_t * csp_iflist_get_by_name(const char *name);
 
 /**
-   Print list of interfaces to stdout.
-*/
-void csp_iflist_print(void);
-
-/**
    Return list of interfaces.
 
    @return First interface or NULL, if no interfaces added.
 */
 csp_iface_t * csp_iflist_get(void);
-
-/**
-   Convert bytes to readable string.
-*/
-int csp_bytesize(char *buffer, int buffer_len, unsigned long int bytes);
 
 #ifdef __cplusplus
 }

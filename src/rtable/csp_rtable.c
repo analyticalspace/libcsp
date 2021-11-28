@@ -18,10 +18,7 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <stdio.h>
 #include <stdbool.h>
-#include <string.h>
-#include <sys/types.h>
 
 #include "csp_rtable_internal.h"
 #include "../csp_init.h"
@@ -30,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/csp_iflist.h>
 #include <csp/interfaces/csp_if_lo.h>
 
+#if 0
 static int csp_rtable_parse(const char * rtable, int dry_run) {
 
 	int valid_entries = 0;
@@ -89,6 +87,7 @@ int csp_rtable_load(const char * rtable) {
 int csp_rtable_check(const char * rtable) {
 	return csp_rtable_parse(rtable, 1);
 }
+#endif
 
 int csp_rtable_set(uint8_t address, uint8_t netmask, csp_iface_t *ifc, uint8_t via) {
 
@@ -108,6 +107,7 @@ int csp_rtable_set(uint8_t address, uint8_t netmask, csp_iface_t *ifc, uint8_t v
 	return csp_rtable_set_internal(address, netmask, ifc, via);
 }
 
+#if 0
 typedef struct {
 	char * buffer;
 	size_t len;
@@ -169,16 +169,16 @@ void csp_rtable_clear(void) {
 	csp_rtable_set(csp_conf.address, CSP_ID_HOST_SIZE, &csp_if_lo, CSP_NO_VIA_ADDRESS);
 }
 
-#if (CSP_DEBUG)
+#endif
 
 static bool csp_rtable_print_route(void * ctx, uint8_t address, uint8_t mask, const csp_route_t * route) {
 
 	(void) ctx;
 
 	if (route->via == CSP_NO_VIA_ADDRESS) {
-		printf("%u/%u %s\r\n", address, mask, route->iface->name);
+		csp_log_error("%u/%u %s", address, mask, route->iface->name);
 	} else {
-		printf("%u/%u %s %u\r\n", address, mask, route->iface->name, route->via);
+		csp_log_error("%u/%u %s %u", address, mask, route->iface->name, route->via);
 	}
 
 	return true;
@@ -189,4 +189,3 @@ void csp_rtable_print(void) {
 	csp_rtable_iterate(csp_rtable_print_route, NULL);
 }
 
-#endif // CSP_DEBUG

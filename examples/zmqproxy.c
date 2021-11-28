@@ -18,11 +18,12 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <unistd.h>
-#include <stdlib.h>
 #include <assert.h>
-#include <signal.h>
+#include <inttypes.h>
 #include <pthread.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <zmq.h>
 
@@ -44,8 +45,8 @@ static void * task_capture(void *ctx) {
 	/* Subscriber (RX) */
 	void *subscriber = zmq_socket(ctx, ZMQ_SUB);
 	zmq_setsockopt(subscriber, ZMQ_LINGER, &lingertime, sizeof(lingertime));
-	assert(zmq_connect(subscriber, "tcp://localhost:7000") == 0);
-	assert(zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, "", 0) == 0);
+	zmq_connect(subscriber, "tcp://localhost:7000");
+	zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, "", 0);
 
 	/* Allocated 'raw' CSP packet */
 	csp_packet_t * packet = malloc(1024);
@@ -82,7 +83,7 @@ static void * task_capture(void *ctx) {
 		memcpy(satidptr, zmq_msg_data(&msg), datalen);
 		packet->length = datalen - sizeof(packet->id) - 1;
 
-		csp_log_packet("Input: Src %u, Dst %u, Dport %u, Sport %u, Pri %u, Flags 0x%02X, Size %"PRIu16,
+		csp_log_packet("Input: Src %u, Dst %u, Dport %u, Sport %u, Pri %u, Flags 0x%02X, Size %" PRIu16,
 					   packet->id.src, packet->id.dst, packet->id.dport,
 					   packet->id.sport, packet->id.pri, packet->id.flags, packet->length);
 
@@ -100,6 +101,14 @@ static void on_sig(int s) {
 
 	(void) s;
 	stop = 1;
+}
+
+static void csp_log_hook(csp_debug_level_t level, const char *format, va_list args)
+{
+	(void) level;
+	vprintf(format, args);
+	printf("\r\n");
+	fflush(stdout);
 }
 
 int main(int argc, char ** argv) {
@@ -124,6 +133,8 @@ int main(int argc, char ** argv) {
 		csp_debug_set_level(i, (i <= debug_level) ? true : false);
 	}
 
+	csp_debug_hook_set(csp_log_hook);
+
 	signal(SIGINT, on_sig);
 
 	void * ctx = zmq_ctx_new();
@@ -132,12 +143,12 @@ int main(int argc, char ** argv) {
 	void *frontend = zmq_socket(ctx, ZMQ_XSUB);
 	assert(frontend);
 	zmq_setsockopt(frontend, ZMQ_LINGER, &lingertime, sizeof(lingertime));
-	assert(zmq_bind (frontend, "tcp://*:6000") == 0);
+	zmq_bind(frontend, "tcp://*:6000");
 
 	void *backend = zmq_socket(ctx, ZMQ_XPUB);
 	assert(backend);
 	zmq_setsockopt(backend, ZMQ_LINGER, &lingertime, sizeof(lingertime));
-	assert(zmq_bind(backend, "tcp://*:7000") == 0);
+	zmq_bind(backend, "tcp://*:7000");
 
 	pthread_t capworker;
 	pthread_create(&capworker, NULL, task_capture, ctx);

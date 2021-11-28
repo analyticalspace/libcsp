@@ -215,9 +215,9 @@ typedef union {
 */
 typedef struct {
 	/**
-           Padding. These bytes are intended for use by protocols, which want to prepend
-           data before sending it, without having to copy/reorganize the entire message.
-        */
+		   Padding. These bytes are intended for use by protocols, which want to prepend
+		   data before sending it, without having to copy/reorganize the entire message.
+		*/
 	uint8_t padding[CSP_PADDING_BYTES];
 	/** Data length. Must be just before CSP ID. */
 	uint16_t length;

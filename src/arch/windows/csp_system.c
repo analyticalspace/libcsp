@@ -34,7 +34,7 @@ int csp_sys_tasklist(char * out) {
 
 int csp_sys_tasklist_size(void) {
 
-        return 100;
+		return 100;
 
 }
 

@@ -23,14 +23,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <synchapi.h>
 
 struct windows_queue_s {
-    void * buffer;
-    int size;
-    int item_size;
-    int items;
-    int head_idx;
-    CRITICAL_SECTION mutex;
-    CONDITION_VARIABLE cond_full;
-    CONDITION_VARIABLE cond_empty;
+	void * buffer;
+	int size;
+	int item_size;
+	int items;
+	int head_idx;
+	CRITICAL_SECTION mutex;
+	CONDITION_VARIABLE cond_full;
+	CONDITION_VARIABLE cond_empty;
 };
 
 static int queueFull(windows_queue_t * queue) {

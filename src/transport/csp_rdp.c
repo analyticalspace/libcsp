@@ -25,12 +25,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <inttypes.h>
 
 #include "csp_transport.h"
@@ -216,9 +214,9 @@ static int csp_rdp_send_cmp(csp_conn_t * conn, csp_packet_t * packet, int flags,
 	idout.pri = conn->idout.pri < CSP_PRIO_HIGH ? conn->idout.pri : CSP_PRIO_HIGH;
 
 	csp_log_protocol("RDP %p: Send CMP S %u: syn %u, ack %u, eack %u, rst %u, seq_nr %5u, ack_nr %5u, packet_len %u (%u)",
-						 conn, conn->rdp.state, header->syn, header->ack, header->eak,
-						 header->rst, csp_ntoh16(header->seq_nr), csp_ntoh16(header->ack_nr),
-						 packet->length, (unsigned int)(packet->length - sizeof(rdp_header_t)));
+					 conn, conn->rdp.state, header->syn, header->ack, header->eak,
+					 header->rst, csp_ntoh16(header->seq_nr), csp_ntoh16(header->ack_nr),
+					 packet->length, (unsigned int)(packet->length - sizeof(rdp_header_t)));
 
 	/* Send packet to IF */
 	if (csp_send_direct(idout, packet, csp_rtable_find_route(idout.dst), 0) != CSP_ERR_NONE) {
@@ -1180,16 +1178,14 @@ void csp_rdp_get_opt(unsigned int * window_size, unsigned int * conn_timeout_ms,
 		*ack_delay_count = csp_rdp_ack_delay_count;
 }
 
-#if (CSP_DEBUG)
 void csp_rdp_conn_print(csp_conn_t * conn) {
 
 	if (conn == NULL)
 		return;
 
-	printf("\tRDP: S:%d (closed by 0x%x), rcv %u, snd %u, win %"PRIu32"\r\n",
-		   conn->rdp.state, conn->rdp.closed_by, conn->rdp.rcv_cur, conn->rdp.snd_una, conn->rdp.window_size);
+	csp_log_error("RDP: S:%d (closed by 0x%x), rcv %u, snd %u, win %" PRIu32,
+				  conn->rdp.state, conn->rdp.closed_by, conn->rdp.rcv_cur, conn->rdp.snd_una, conn->rdp.window_size);
 
 }
-#endif // CSP_DEBUG
 
 #endif // CSP_USE_RDP
