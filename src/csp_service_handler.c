@@ -60,11 +60,11 @@ static int do_cmp_ident(struct csp_cmp_message *cmp) {
 	cmp->ident.revision[CSP_CMP_IDENT_REV_LEN - 1] = '\0';
 
 	/* Copy compilation date */
-	strncpy(cmp->ident.date, __DATE__, CSP_CMP_IDENT_DATE_LEN);
+	strncpy(cmp->ident.date, "N/A", CSP_CMP_IDENT_DATE_LEN);
 	cmp->ident.date[CSP_CMP_IDENT_DATE_LEN - 1] = '\0';
 
 	/* Copy compilation time */
-	strncpy(cmp->ident.time, __TIME__, CSP_CMP_IDENT_TIME_LEN);
+	strncpy(cmp->ident.time, "N/A", CSP_CMP_IDENT_TIME_LEN);
 	cmp->ident.time[CSP_CMP_IDENT_TIME_LEN - 1] = '\0';
 
 	/* Copy hostname */
