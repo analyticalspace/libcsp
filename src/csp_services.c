@@ -79,7 +79,9 @@ out:
 	time = (csp_get_ms() - start);
 
 	if (status) {
-		return time;
+		/* always make time at least 1ms to remove the false positive
+		 * when the ping was really fast. */
+		return time > 1 ? time : 1;
 	}
 
 	return -1;
