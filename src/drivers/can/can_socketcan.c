@@ -37,12 +37,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <csp/csp_autoconfig.h>
 
-#if (CSP_HAVE_LIBSOCKETCAN)
-#include <libsocketcan.h>
-#endif
-
 #include <csp/csp.h>
 #include <csp/arch/csp_thread.h>
+#include <csp/arch/csp_malloc.h>
 #include <csp/drivers/can_socketcan.h>
 
 // CAN interface data, state, etc.
@@ -61,7 +58,7 @@ static void socketcan_free(can_context_t * ctx) {
 			close(ctx->socket);
 		}
 
-		free(ctx);
+		csp_free(ctx);
 	}
 }
 
@@ -109,7 +106,6 @@ static CSP_DEFINE_TASK(socketcan_rx_thread)
 	csp_thread_exit();
 }
 
-
 static int csp_can_tx_frame(void * driver_data, uint32_t id, const uint8_t * data, uint8_t dlc)
 {
 	if (dlc > 8) {
@@ -155,17 +151,7 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	struct sockaddr_can addr;
 	memset(&addr, 0, sizeof(addr));
 
-#if (CSP_HAVE_LIBSOCKETCAN)
-	/* Set interface up - this may require increased OS privileges */
-	if (bitrate > 0) {
-		can_do_stop(device);
-		can_set_bitrate(device, bitrate);
-		can_set_restart_ms(device, 100);
-		can_do_start(device);
-	}
-#endif
-
-	can_context_t * ctx = calloc(1, sizeof(*ctx));
+	can_context_t * ctx = csp_calloc(1, sizeof(*ctx));
 
 	if (ctx == NULL) {
 		return CSP_ERR_NOMEM;
