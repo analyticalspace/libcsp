@@ -19,6 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <stdbool.h>
+#include <string.h>
+#include <stdio.h>
 
 #include "csp_rtable_internal.h"
 #include "../csp_init.h"
@@ -27,7 +29,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/csp_iflist.h>
 #include <csp/interfaces/csp_if_lo.h>
 
-#if 0
 static int csp_rtable_parse(const char * rtable, int dry_run) {
 
 	int valid_entries = 0;
@@ -87,7 +88,6 @@ int csp_rtable_load(const char * rtable) {
 int csp_rtable_check(const char * rtable) {
 	return csp_rtable_parse(rtable, 1);
 }
-#endif
 
 int csp_rtable_set(uint8_t address, uint8_t netmask, csp_iface_t *ifc, uint8_t via) {
 
@@ -176,9 +176,9 @@ static bool csp_rtable_print_route(void * ctx, uint8_t address, uint8_t mask, co
 	(void) ctx;
 
 	if (route->via == CSP_NO_VIA_ADDRESS) {
-		csp_log_error("%u/%u %s", address, mask, route->iface->name);
+		csp_log_info("%u/%u %s", address, mask, route->iface->name);
 	} else {
-		csp_log_error("%u/%u %s %u", address, mask, route->iface->name, route->via);
+		csp_log_info("%u/%u %s %u", address, mask, route->iface->name, route->via);
 	}
 
 	return true;
