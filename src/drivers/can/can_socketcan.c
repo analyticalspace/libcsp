@@ -42,14 +42,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/arch/csp_malloc.h>
 #include <csp/drivers/can_socketcan.h>
 
+#define CSP_MAX_SOCKETCAN_CONTEXTS (3)
+
 // CAN interface data, state, etc.
-typedef struct {
+typedef struct
+{
 	char name[CSP_IFLIST_NAME_MAX + 1];
 	csp_iface_t iface;
 	csp_can_interface_data_t ifdata;
 	csp_thread_handle_t rx_thread;
 	int socket;
 } can_context_t;
+
+// HACK to support multiple can drivers but only
+// in succession
+static unsigned int g_socketcan_context_index = 0;
+
+static can_context_t g_socketcan_contexts[CSP_MAX_SOCKETCAN_CONTEXTS] = {0};
 
 static void socketcan_free(can_context_t * ctx) {
 
@@ -147,15 +156,25 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	csp_log_info("INIT %s: device: [%s], bitrate: %d, promisc: %d",
 			ifname, device, bitrate, promisc);
 
+    if (g_socketcan_context_index >= CSP_MAX_SOCKETCAN_CONTEXTS)
+    {
+        csp_log_error("Too man socketcan interfaces: %u",
+                      g_socketcan_context_index);
+        return CSP_ERR_NOMEM;
+    }
+
 	struct ifreq ifr;
 	struct sockaddr_can addr;
 	memset(&addr, 0, sizeof(addr));
 
-	can_context_t * ctx = csp_calloc(1, sizeof(*ctx));
+	can_context_t * ctx = 
+        &(g_socketcan_contexts[g_socketcan_context_index]);
 
-	if (ctx == NULL) {
-		return CSP_ERR_NOMEM;
-	}
+    if (NULL ==
+        (ctx = csp_calloc(1, sizeof(*ctx))))
+    {
+        return CSP_ERR_NOMEM;
+    }
 
 	ctx->socket = -1;
 
@@ -239,7 +258,7 @@ csp_iface_t * csp_can_socketcan_init(const char * device, int bitrate, bool prom
 
 	csp_iface_t * return_iface;
 	int res =
-		csp_can_socketcan_open_and_add_interface(device, CSP_IF_CAN_DEFAULT_NAME,
+		csp_can_socketcan_open_and_add_interface(device, device,
 												 bitrate, promisc, &return_iface);
 	return (res == CSP_ERR_NONE) ? return_iface : NULL;
 }
