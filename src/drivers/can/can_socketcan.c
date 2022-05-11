@@ -275,12 +275,6 @@ int csp_can_socketcan_stop(csp_iface_t *iface) {
 		return CSP_ERR_DRIVER;
 	}
 
-	if (error != 0) {
-		csp_log_error("%s[%s]: pthread_join() failed, error: %s",
-					  __FUNCTION__, ctx->name, strerror(errno));
-		return CSP_ERR_DRIVER;
-	}
-
 	socketcan_free(ctx);
 	return CSP_ERR_NONE;
 }
